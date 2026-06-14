@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { api } from '../../api/client';
 import { LogOut, ShieldAlert, X, Power } from 'lucide-react';

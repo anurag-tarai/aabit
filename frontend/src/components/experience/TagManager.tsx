@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Edit2, Check, XCircle } from 'lucide-react';
 import { api } from '../../api/client';
 import type { Tag } from '../../api/client';

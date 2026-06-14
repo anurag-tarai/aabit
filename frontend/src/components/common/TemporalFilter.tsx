@@ -52,7 +52,7 @@ export const TemporalFilter: React.FC<TemporalFilterProps> = ({ value, onChange 
   const daysInMonth = getDaysInMonth(currentYear, currentMonthIdx);
   const firstDayIdx = getFirstDayOfMonthIdx(currentYear, currentMonthIdx);
 
-  const blanks = Array.from({ length: firstDayIdx }, (_, i) => null);
+  const blanks = Array.from({ length: firstDayIdx }, (_) => null);
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const calendarGridCells = [...blanks, ...days];
 

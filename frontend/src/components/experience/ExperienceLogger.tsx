@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Send, Lock, Hash, Loader2 } from 'lucide-react';
 import { MarkdownToolbar } from '../common/MarkdownToolbar';
 import { api } from "../../api/client";
