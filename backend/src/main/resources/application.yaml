@@ -1,0 +1,58 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: aabit
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  mail:
+    host: smtp-relay.brevo.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+  open-in-view: false
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+
+  output:
+    ansi:
+      enabled: ALWAYS
+
+  # swagger-ui custom path
+springdoc:
+  swagger-ui.path: /swagger-ui.html
+
+aabit:
+  auth:
+    # Generate a secure 256-bit string key for signature validation tokens
+    jwt-secret: ${AABIT_AUTH_JWT_SECRET}
+    # Token lifespan restriction defaults to 7 days expressed in milliseconds
+    jwt-expiration-ms: 604800000
+
+
+
+
+

@@ -1,0 +1,18 @@
+# Target build directory
+target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# System Wrapper
+.mvn/wrapper/maven-wrapper.jar
+
+# Configuration Secrets
+.env
+.env.*
+application-local.yml
+application-dev.yml
+
+# Built binaries
+*.class
+*.jar
+*.war

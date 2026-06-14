@@ -1,0 +1,23 @@
+# ==========================================
+# MASTER ROOT GLOBAL SAFETY NET
+# ==========================================
+
+# IDEs and System Garbage
+.idea/
+.vscode/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Top-level environment variables
+.env
+.env.*
+*.log
+
+# Hard safety blocks for sub-modules
+**/node_modules/
+**/target/
+**/dist/
