@@ -19,7 +19,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/experiences")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class ExperienceController {
 
     private final ExperienceService experienceService;

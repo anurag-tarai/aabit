@@ -36,7 +36,8 @@ public class SecurityConfig {
                                 "/api/v1/auth/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
-                                "/v3/api-docs/**"
+                                "/v3/api-docs/**",
+                                "/health"
                         ).permitAll() // Open access path routing
                         .anyRequest().authenticated() // Block all other endpoint interaction modules
                 )
@@ -49,7 +50,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("*")); // Allows cross-origin connection streams from local Vite dev configurations
+        config.setAllowedOrigins(List.of(
+                "https://aabit.vercel.app",
+                "http://localhost:5173/"
+        ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cache-Control"));
 

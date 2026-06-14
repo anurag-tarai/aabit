@@ -14,7 +14,6 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/tags")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class TagController {
 
     private final ExperienceService experienceService;
