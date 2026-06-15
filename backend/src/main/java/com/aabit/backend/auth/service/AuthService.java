@@ -115,7 +115,6 @@ public class AuthService {
     }
 
     // Replace your old dispatchEmailNotification method with this version:
-    @Async
     private void dispatchEmailNotification(String targetEmail, String code) {
 
         log.info("[EMAIL_SEND_START] email={}", targetEmail);

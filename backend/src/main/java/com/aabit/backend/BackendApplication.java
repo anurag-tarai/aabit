@@ -6,7 +6,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.scheduling.annotation.EnableAsync;
 
-@EnableAsync
 @SpringBootApplication
 @EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
 public class BackendApplication {

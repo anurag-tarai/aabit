@@ -2,7 +2,8 @@ import axios from 'axios';
 
 // Ensure your Spring Boot server is running on 8080
 export const api = axios.create({
-  baseURL: 'https://aabit.onrender.com/api/v1',
+  baseURL: 'https://backend-autumn-ember-2113.fly.dev/api/v1',
+  // baseURL: 'http://localhost:8080/api/v1'
 });
 
 export interface Tag {
