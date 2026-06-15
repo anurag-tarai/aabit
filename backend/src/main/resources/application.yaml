@@ -19,16 +19,19 @@ spring:
 
   mail:
     host: smtp-relay.brevo.com
-    port: 587
+    port: 465
     username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
           auth: true
+          socketFactory:
+            class: javax.net.ssl.SSLSocketFactory
+            fallback: false
+            port: 465
           starttls:
-            enable: true
-            required: true
+            enable: false
 
   open-in-view: false
 
