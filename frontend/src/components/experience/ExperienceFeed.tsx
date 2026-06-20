@@ -64,18 +64,19 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
     setEditLocation("");
   };
 
+  // UPDATED: Now identifies and replaces code blocks wrapping location segments
   const handleEditSave = async (entry: ExperienceResponse) => {
     try {
       let finalContent = editContent;
 
       if (editLocation) {
-        // Look for an existing plain text location block to replace
-        if (finalContent.includes("\n\n---\n📍")) {
-          const splitArray = finalContent.split("\n\n---\n📍");
+        // Look for an existing plain text location block wrapped in code syntax to update
+        if (finalContent.includes("\n\n\`\`\`\n📍")) {
+          const splitArray = finalContent.split("\n\n\`\`\`\n📍");
           splitArray.pop(); // Clear out the old block segment safely
-          finalContent = splitArray.join("\n\n---\n📍") + `\n\n---\n📍 ${editLocation}`;
+          finalContent = splitArray.join("\n\n\`\`\`\n📍") + `\n\n\`\`\`\n📍 ${editLocation}\n\`\`\``;
         } else {
-          finalContent += `\n\n---\n📍 ${editLocation}`;
+          finalContent += `\n\n\`\`\`\n📍 ${editLocation}\n\`\`\``;
         }
       }
 
@@ -239,9 +240,10 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
                   }`}
                 />
 
+                {/* UPDATED: Informational text helper shows updated code syntax styling context */}
                 {editLocation && (
                   <p className="text-[11px] text-green-400 bg-os-bg/50 border border-os-border/50 rounded-md p-2 font-mono break-words">
-                    Will update baseline: 📍 {editLocation}
+                    Will update inside code block: 📍 {editLocation}
                   </p>
                 )}
 

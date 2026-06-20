@@ -48,8 +48,8 @@ export const ExperienceLogger = ({ onLogSuccess }: { onLogSuccess: () => void })
 
       // Appends location matching your exact plain text format
       if (location) {
-        finalContent += `\n\n---\n📍 ${location}`;
-      }
+  finalContent += `\n\n\`\`\`\n📍 ${location}\n\`\`\``;
+}
 
       const payload: ExperienceRequest = {
         markdownContent: finalContent,
