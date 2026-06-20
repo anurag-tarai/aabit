@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { MainLayout } from './components/common/MainLayout';
 import { ExperienceDashboard } from './components/experience/ExperienceDashboard';
 import { AuthPage } from './components/auth/AuthPage';
+import { SprintDashboard } from './components/sprints/SprintDashboard';
 
 // Complete Stateless Route Boundary Protection Guard 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -36,11 +37,14 @@ function App() {
           {/* <Route path="habits" element={<HabitDashboard />} /> */}
           {/* <Route path="sprints" element={<SprintDashboard />} /> */}
           <Route path="habits" element={<div className="font-mono text-xs text-neutral-500 p-4 border border-dashed border-neutral-800 rounded">SYSTEM_NODE: HABIT_LOG_ENGINE // COMING_SOON</div>} />
-  <Route path="sprints" element={<div className="font-mono text-xs text-neutral-500 p-4 border border-dashed border-neutral-800 rounded">SYSTEM_NODE: SPRINT_CONTROL_DECK // COMING_SOON</div>} />
+          <Route path="sprints" element={<SprintDashboard />} />
         </Route>
 
         {/* Catch-All Standard Fallback Safety Re-router */}
         <Route path="*" element={<Navigate to="/" replace />} />
+        
+        
+  
       </Routes>
     </BrowserRouter>
   );

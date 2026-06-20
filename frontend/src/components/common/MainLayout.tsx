@@ -38,12 +38,12 @@ export const MainLayout = () => {
     }
   };
 
-  // Utility to match active routing contexts for navigation styling
   const isActive = (path: string) => location.pathname === path;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-[#e5e5e5] font-sans p-3 sm:p-6 md:p-8 flex flex-col items-center selection:bg-neutral-800 selection:text-white">
-      <div className="w-full max-w-2xl flex flex-col gap-5">
+      {/* 💡 FIXED: Changed max-w-2xl to max-w-[95vw] sm:max-w-7xl to give your matrix grids optimal breathing room */}
+      <div className="w-full max-w-[95vw] sm:max-w-7xl flex flex-col gap-5 transition-all duration-300">
         
         {/* Dynamic Multi-State System Status Bar Layout */}
         <div className="relative overflow-hidden border-b border-neutral-800 pb-3 tracking-wider min-h-[40px] sm:min-h-[28px]">
