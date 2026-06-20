@@ -3,7 +3,7 @@ import ReactMarkdown from "react-markdown";
 import { MarkdownToolbar } from "../common/MarkdownToolbar";
 import { api } from "../../api/client";
 import type { ExperienceResponse, Tag } from "../../api/client";
-import { Trash2, Lock, Edit2, Check, X, Hash } from "lucide-react";
+import { Trash2, Lock, Edit2, Check, X, Hash, MapPin, Loader2 } from "lucide-react";
 
 interface ExperienceFeedProps {
   feed: ExperienceResponse[];
@@ -22,9 +22,13 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
 }) => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [editIsSensitive, setEditIsSensitive] = useState(false);
   const [editSelectedTags, setEditSelectedTags] = useState<string[]>([]);
   const [editTagInput, setEditTagInput] = useState("");
   const [showEditDropdown, setShowEditDropdown] = useState(false);
+
+  const [editLocation, setEditLocation] = useState<string>("");
+  const [fetchingLocation, setFetchingLocation] = useState(false);
 
   useEffect(() => {
     const closeDropdowns = () => setShowEditDropdown(false);
@@ -54,29 +58,83 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
   const handleEditStart = (entry: ExperienceResponse) => {
     setEditingId(entry.id);
     setEditContent(entry.markdownContent);
+    setEditIsSensitive(entry.sensitive);
     setEditSelectedTags([...entry.tags]);
     setEditTagInput("");
+    setEditLocation("");
   };
 
   const handleEditSave = async (entry: ExperienceResponse) => {
     try {
+      let finalContent = editContent;
+
+      if (editLocation) {
+        // Look for an existing plain text location block to replace
+        if (finalContent.includes("\n\n---\n📍")) {
+          const splitArray = finalContent.split("\n\n---\n📍");
+          splitArray.pop(); // Clear out the old block segment safely
+          finalContent = splitArray.join("\n\n---\n📍") + `\n\n---\n📍 ${editLocation}`;
+        } else {
+          finalContent += `\n\n---\n📍 ${editLocation}`;
+        }
+      }
+
       await api.put(`/experiences/${entry.id}`, {
-        markdownContent: editContent,
-        sensitive: entry.sensitive,
+        markdownContent: finalContent,
+        sensitive: editIsSensitive,
         tags: editSelectedTags,
       });
       setEditingId(null);
+      setEditLocation("");
       onMutationRequired();
     } catch (error) {
       console.error("Failed to mutate entry parameters", error);
     }
   };
 
-  // Overwrite the old handleTagInputKeyDown method with this clean array push layout:
+  const fetchCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setFetchingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
+          );
+          const data = await response.json();
+          if (data && data.address) {
+            const addr = data.address;
+            const area = addr.suburb || addr.residential || addr.neighbourhood || "";
+            const regionalDistrict = addr.city_district || addr.city || addr.town || "";
+            
+            const cleanAddress = [area, regionalDistrict].filter(Boolean).join(', ');
+            setEditLocation(cleanAddress);
+          } else {
+            setEditLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+          }
+        } catch (error) {
+          console.error("Geocoding failed inside update editor:", error);
+          setEditLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+        } finally {
+          setFetchingLocation(false);
+        }
+      },
+      (error) => {
+        alert(`Failed to get location: ${error.message}`);
+        setFetchingLocation(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
   const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      e.preventDefault(); // Stop standard form or page refresh triggers
-      
+      e.preventDefault();
       const cleanName = editTagInput.trim().toLowerCase();
       if (cleanName && !editSelectedTags.includes(cleanName)) {
         setEditSelectedTags([...editSelectedTags, cleanName]);
@@ -86,11 +144,9 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
     }
   };
 
-  // DATE FORMATTING LOGIC
   const formatDateTime = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
-
     const isToday = date.toDateString() === now.toDateString();
 
     const yesterday = new Date();
@@ -178,8 +234,16 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
                   id={`edit-textarea-${entry.id}`}
                   value={editContent}
                   onChange={(e) => setEditContent(e.target.value)}
-                  className="w-full h-32 p-3 bg-os-bg border border-os-border rounded-lg text-white outline-none resize-none font-mono text-sm focus:border-gray-500"
+                  className={`w-full h-32 p-3 bg-os-bg border border-os-border rounded-lg text-white outline-none resize-none font-mono text-sm focus:border-gray-500 transition-all ${
+                    editIsSensitive ? 'blur-[3px] focus:blur-none hover:blur-none' : ''
+                  }`}
                 />
+
+                {editLocation && (
+                  <p className="text-[11px] text-green-400 bg-os-bg/50 border border-os-border/50 rounded-md p-2 font-mono break-words">
+                    Will update baseline: 📍 {editLocation}
+                  </p>
+                )}
 
                 {/* TAG CONSOLE DROPDOWN SELECTOR */}
                 <div className="relative">
@@ -193,7 +257,7 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
                         setShowEditDropdown(true);
                       }}
                       onFocus={() => setShowEditDropdown(true)}
-                      onKeyDown={handleTagInputKeyDown} // Bound keydown to listen for Enter
+                      onKeyDown={handleTagInputKeyDown}
                       placeholder="Attach system tokens... (Press Enter to spawn new tag)"
                       className="bg-transparent text-xs w-full outline-none text-white placeholder-os-muted"
                     />
@@ -219,29 +283,16 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
                         </button>
                       ))}
 
-                      {/* 💡 ADD THIS CONDITIONAL CHECK BOX BELOW THE MAP TIMELINE LOOP */}
                       {!filteredEditTags.find(
-                        (t) =>
-                          t.name.toLowerCase() ===
-                          editTagInput.toLowerCase().trim(),
+                        (t) => t.name.toLowerCase() === editTagInput.toLowerCase().trim()
                       ) &&
-                        !editSelectedTags.includes(
-                          editTagInput.toLowerCase().trim(),
-                        ) && (
+                        !editSelectedTags.includes(editTagInput.toLowerCase().trim()) && (
                           <button
                             type="button"
                             onClick={() => {
-                              const cleanName = editTagInput
-                                .trim()
-                                .toLowerCase();
-                              if (
-                                cleanName &&
-                                !editSelectedTags.includes(cleanName)
-                              ) {
-                                setEditSelectedTags([
-                                  ...editSelectedTags,
-                                  cleanName,
-                                ]);
+                              const cleanName = editTagInput.trim().toLowerCase();
+                              if (cleanName && !editSelectedTags.includes(cleanName)) {
+                                setEditSelectedTags([...editSelectedTags, cleanName]);
                               }
                               setEditTagInput("");
                               setShowEditDropdown(false);
@@ -261,11 +312,7 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
                     {editSelectedTags.map((tag) => (
                       <span
                         key={tag}
-                        onClick={() =>
-                          setEditSelectedTags(
-                            editSelectedTags.filter((t) => t !== tag),
-                          )
-                        }
+                        onClick={() => setEditSelectedTags(editSelectedTags.filter((t) => t !== tag))}
                         className="px-2 py-0.5 text-[11px] bg-os-bg border border-os-border text-gray-300 rounded cursor-pointer hover:bg-red-950/40 hover:text-red-400 hover:border-red-900/50 transition-all flex items-center gap-1"
                       >
                         #{tag}
@@ -276,19 +323,48 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
                 )}
 
                 {/* EDITING INTERACTION FOOTER CONTROLS */}
-                <div className="flex justify-end gap-2 mt-1 pt-2 border-t border-os-border/40">
-                  <button
-                    onClick={() => setEditingId(null)}
-                    className="flex items-center gap-1 text-xs text-os-muted hover:text-white px-2 py-1 cursor-pointer"
-                  >
-                    <X size={14} /> Cancel
-                  </button>
-                  <button
-                    onClick={() => handleEditSave(entry)}
-                    className="flex items-center gap-1 text-xs bg-green-900/40 text-green-400 hover:bg-green-900/60 px-3 py-1.5 rounded-md transition-colors cursor-pointer"
-                  >
-                    <Check size={14} /> Save
-                  </button>
+                <div className="flex justify-between items-center mt-1 pt-2 border-t border-os-border/40">
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditIsSensitive(!editIsSensitive)}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                        editIsSensitive ? 'bg-red-900/20 text-red-400' : 'text-os-muted hover:bg-os-bg hover:text-os-text'
+                      }`}
+                    >
+                      <Lock size={14} />
+                      {editIsSensitive ? 'Sensitive' : 'Not Sensitive'}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={fetchCurrentLocation}
+                      disabled={fetchingLocation}
+                      className="flex items-center gap-1.5 text-xs bg-os-bg border border-os-border text-os-muted hover:text-white px-2.5 py-1.5 rounded-md transition-colors cursor-pointer"
+                    >
+                      {fetchingLocation ? (
+                        <Loader2 size={13} className="animate-spin" />
+                      ) : (
+                        <MapPin size={13} className={editLocation ? "text-blue-400" : ""} />
+                      )}
+                      {editLocation ? "Update Location" : "Attach Location"}
+                    </button>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => { setEditingId(null); setEditLocation(""); }}
+                      className="flex items-center gap-1 text-xs text-os-muted hover:text-white px-2 py-1 cursor-pointer"
+                    >
+                      <X size={14} /> Cancel
+                    </button>
+                    <button
+                      onClick={() => handleEditSave(entry)}
+                      className="flex items-center gap-1 text-xs bg-green-900/40 text-green-400 hover:bg-green-900/60 px-3 py-1.5 rounded-md transition-colors cursor-pointer"
+                    >
+                      <Check size={14} /> Save
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (

@@ -35,6 +35,8 @@ function App() {
           {/* Future Plug-and-Play slots mount modularly right under this exact wrapper layout: */}
           {/* <Route path="habits" element={<HabitDashboard />} /> */}
           {/* <Route path="sprints" element={<SprintDashboard />} /> */}
+          <Route path="habits" element={<div className="font-mono text-xs text-neutral-500 p-4 border border-dashed border-neutral-800 rounded">SYSTEM_NODE: HABIT_LOG_ENGINE // COMING_SOON</div>} />
+  <Route path="sprints" element={<div className="font-mono text-xs text-neutral-500 p-4 border border-dashed border-neutral-800 rounded">SYSTEM_NODE: SPRINT_CONTROL_DECK // COMING_SOON</div>} />
         </Route>
 
         {/* Catch-All Standard Fallback Safety Re-router */}

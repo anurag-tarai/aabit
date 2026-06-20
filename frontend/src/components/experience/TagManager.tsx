@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { X, Edit2, Check, XCircle } from 'lucide-react';
+import { X, Edit2, Check, XCircle, Search } from 'lucide-react'; // Added Search icon
 import { api } from '../../api/client';
 import type { Tag } from '../../api/client';
 
 export const TagManager = ({ onClose, onTagsChanged }: { onClose: () => void, onTagsChanged: () => void }) => {
   const [tags, setTags] = useState<Tag[]>([]);
+  const [filterText, setFilterText] = useState(''); // New: state for the search filter
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [loading, setLoading] = useState(true);
@@ -42,6 +43,11 @@ export const TagManager = ({ onClose, onTagsChanged }: { onClose: () => void, on
     }
   };
 
+  // New: Filter the tags based on the input text
+  const filteredTags = tags.filter(tag => 
+    tag.name.toLowerCase().includes(filterText.toLowerCase())
+  );
+
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
       <div className="bg-os-surface border border-os-border rounded-xl w-full max-w-md max-h-[80vh] flex flex-col shadow-2xl">
@@ -54,14 +60,40 @@ export const TagManager = ({ onClose, onTagsChanged }: { onClose: () => void, on
           </button>
         </div>
 
+        {/* New: Filter Input Field */}
+        {!loading && tags.length > 0 && (
+          <div className="p-4 pb-0">
+            <div className="relative flex items-center bg-os-bg border border-os-border rounded-lg px-3 py-2 text-sm">
+              <Search size={16} className="text-os-muted mr-2 shrink-0" />
+              <input
+                type="text"
+                placeholder="Filter tags..."
+                value={filterText}
+                onChange={(e) => setFilterText(e.target.value)}
+                className="bg-transparent text-white outline-none w-full placeholder-os-muted"
+              />
+              {filterText && (
+                <button 
+                  onClick={() => setFilterText('')} 
+                  className="text-os-muted hover:text-white transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Tag List */}
         <div className="p-4 overflow-y-auto flex-1 flex flex-col gap-2">
           {loading ? (
              <p className="text-sm text-os-muted">Loading tags...</p>
           ) : tags.length === 0 ? (
              <p className="text-sm text-os-muted">No tags created yet.</p>
+          ) : filteredTags.length === 0 ? (
+             <p className="text-sm text-os-muted">No matching tags found.</p>
           ) : (
-            tags.map(tag => (
+            filteredTags.map(tag => (
               <div key={tag.id} className="flex items-center justify-between bg-os-bg border border-os-border p-2 rounded-lg">
                 {editingId === tag.id ? (
                   <div className="flex items-center gap-2 w-full">

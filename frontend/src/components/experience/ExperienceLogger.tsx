@@ -14,6 +14,9 @@ export const ExperienceLogger = ({ onLogSuccess }: { onLogSuccess: () => void })
   const [tagInput, setTagInput] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
 
+  const [location, setLocation] = useState<string>('');
+  const [fetchingLocation, setFetchingLocation] = useState(false);
+
   useEffect(() => {
     api.get<Tag[]>('/tags').then(res => setAllTags(res.data)).catch(console.error);
   }, []);
@@ -41,8 +44,15 @@ export const ExperienceLogger = ({ onLogSuccess }: { onLogSuccess: () => void })
     setIsSubmitting(true);
 
     try {
+      let finalContent = content;
+
+      // Appends location matching your exact plain text format
+      if (location) {
+        finalContent += `\n\n---\n📍 ${location}`;
+      }
+
       const payload: ExperienceRequest = {
-        markdownContent: content,
+        markdownContent: finalContent,
         sensitive: isSensitive,
         tags: selectedTags,
       };
@@ -51,6 +61,7 @@ export const ExperienceLogger = ({ onLogSuccess }: { onLogSuccess: () => void })
       setContent('');
       setSelectedTags([]);
       setIsSensitive(false);
+      setLocation(''); 
       onLogSuccess();
     } catch (error) {
       console.error('Failed to log experience', error);
@@ -60,13 +71,52 @@ export const ExperienceLogger = ({ onLogSuccess }: { onLogSuccess: () => void })
     }
   };
 
+  const fetchCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    setFetchingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
+          );
+          const data = await response.json();
+          if (data && data.address) {
+            const addr = data.address;
+            const area = addr.suburb || addr.residential || addr.neighbourhood || "";
+            const regionalDistrict = addr.city_district || addr.city || addr.town || "";
+            
+            const cleanAddress = [area, regionalDistrict].filter(Boolean).join(', ');
+            setLocation(cleanAddress);
+          } else {
+            setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+          }
+        } catch (error) {
+          console.error("Geocoding failed:", error);
+          setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+        } finally {
+          setFetchingLocation(false);
+        }
+      },
+      (error) => {
+        alert(`Failed to get location: ${error.message}`);
+        setFetchingLocation(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  };
+
   return (
     <div className="bg-os-surface border border-os-border rounded-xl p-4 flex flex-col gap-3 shadow-2xl">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-bold tracking-tight text-white">Today</h2>
       </div>
 
-      {/* Embedded Reusable Toolbar Component */}
       <MarkdownToolbar textareaId="main-logger-textarea" content={content} setContent={setContent} />
 
       <textarea
@@ -78,6 +128,24 @@ export const ExperienceLogger = ({ onLogSuccess }: { onLogSuccess: () => void })
           isSensitive ? 'blur-[3px] focus:blur-none hover:blur-none' : ''
         }`}
       />
+
+      <div className="flex flex-col gap-1.5">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={fetchCurrentLocation}
+            disabled={fetchingLocation}
+            className="flex items-center gap-1.5 text-xs bg-os-bg border border-os-border hover:text-white px-2.5 py-1.5 rounded-lg text-os-muted transition-colors cursor-pointer"
+          >
+            {fetchingLocation ? "Getting Location..." : "📍 Auto-Attach Location"}
+          </button>
+        </div>
+        {location && (
+          <p className="text-[11px] text-green-400 bg-os-bg/50 border border-os-border/50 rounded-md p-2 font-mono break-words">
+            Will append: 📍 {location}
+          </p>
+        )}
+      </div>
 
       <div className="relative">
         <div className="flex items-center gap-2 p-2 bg-os-bg border border-os-border rounded-lg focus-within:border-gray-500 transition-colors">
