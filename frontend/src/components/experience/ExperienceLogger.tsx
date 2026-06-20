@@ -107,7 +107,7 @@ export const ExperienceLogger = ({ onLogSuccess }: { onLogSuccess: () => void })
         alert(`Failed to get location: ${error.message}`);
         setFetchingLocation(false);
       },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 30000, maximumAge: 300000}
     );
   };
 
