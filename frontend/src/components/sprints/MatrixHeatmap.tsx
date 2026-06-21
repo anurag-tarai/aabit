@@ -10,11 +10,11 @@ interface MatrixProps {
 }
 
 const getIntensityClass = (minutes: number): string => {
-  if (minutes === 0) return 'bg-neutral-900/30 border-neutral-800/30 text-neutral-700';
-  if (minutes <= 30)  return 'bg-emerald-950/50 border-emerald-900/50 text-emerald-600';
-  if (minutes <= 60)  return 'bg-emerald-900/80 border-emerald-800 text-emerald-400';
+  if (minutes === 0) return 'bg-neutral-900/40 border-neutral-800/40 text-neutral-700';
+  if (minutes <= 30)  return 'bg-emerald-950/70 border-emerald-900/60 text-emerald-600';
+  if (minutes <= 60)  return 'bg-emerald-900/90 border-emerald-800 text-emerald-400';
   if (minutes <= 120) return 'bg-emerald-700 border-emerald-600 text-emerald-100';
-  return 'bg-emerald-500 border-emerald-400 text-black font-bold shadow-[0_0_6px_rgba(16,185,129,0.25)]';
+  return 'bg-emerald-500 border-emerald-400 text-black font-bold shadow-[0_0_8px_rgba(16,185,129,0.3)]';
 };
 
 const formatMinutes = (mins: number): string => {
@@ -24,6 +24,8 @@ const formatMinutes = (mins: number): string => {
   const m = mins % 60;
   return m === 0 ? `${h}h` : `${h}h${m}m`;
 };
+
+const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 export const MatrixHeatmap: React.FC<MatrixProps> = ({
   goals,
@@ -45,35 +47,45 @@ export const MatrixHeatmap: React.FC<MatrixProps> = ({
   const totalForDay = (day: number): number =>
     goals.reduce((sum, g) => sum + getMinutes(day, g.id), 0);
 
+  const getDow = (day: number): string =>
+    DOW[new Date(year, monthFocus.getMonth(), day).getDay()];
+
+  const isWeekend = (day: number): boolean => {
+    const d = new Date(year, monthFocus.getMonth(), day).getDay();
+    return d === 0 || d === 6;
+  };
+
   return (
-    <div className="w-full bg-[#0a0a0a] border border-neutral-800 rounded p-4 font-mono text-[11px]">
-      <div className="flex justify-between items-center mb-3 pb-2 border-b border-neutral-900">
-        <span className="text-neutral-400 font-bold tracking-widest">MATRIX</span>
-        <span className="text-neutral-600 tracking-wider">
+    <div className="w-full bg-[#0a0a0a] border border-neutral-800 rounded font-mono text-[11px]">
+      {/* Header */}
+      <div className="flex justify-between items-center px-4 pt-3 pb-2 border-b border-neutral-900">
+        <span className="text-neutral-400 font-bold tracking-widest text-xs">MATRIX</span>
+        <span className="text-neutral-600 tracking-wider text-[10px]">
           {monthFocus.toLocaleString('default', { month: 'long', year: 'numeric' }).toUpperCase()}
         </span>
       </div>
 
       {goals.length === 0 ? (
-        <div className="text-neutral-600 text-center py-6 tracking-widest text-xs">
-          NO_GOALS_IN_SPRINT — ADD_GOALS_TO_SEE_MATRIX
+        <div className="text-neutral-600 text-center py-8 tracking-widest text-xs px-4">
+          NO_GOALS_IN_SPRINT — OPEN GOALS PANEL TO ADD
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+          <table className="w-full border-collapse" style={{ minWidth: `${goals.length * 90 + 80}px` }}>
             <thead>
-              <tr>
-                <th className="p-1 text-left text-neutral-700 w-10">DAY</th>
+              <tr className="border-b border-neutral-900/60">
+                <th className="p-2 text-left text-neutral-700 w-12 text-[10px] font-normal">DAY</th>
+                <th className="p-2 text-left text-neutral-700 w-8 text-[10px] font-normal"></th>
                 {goals.map(g => (
                   <th
                     key={g.id}
-                    className="p-1 text-center font-normal tracking-wider min-w-[80px]"
-                    style={{ color: g.color }}
+                    className="p-2 text-center font-bold tracking-wider text-[10px]"
+                    style={{ color: g.color, minWidth: '88px' }}
                   >
                     {g.name.toUpperCase()}
                   </th>
                 ))}
-                <th className="p-1 text-center text-neutral-700 w-14">TOTAL</th>
+                <th className="p-2 text-center text-neutral-700 w-16 text-[10px] font-normal">TOTAL</th>
               </tr>
             </thead>
             <tbody>
@@ -81,33 +93,50 @@ export const MatrixHeatmap: React.FC<MatrixProps> = ({
                 const dayStr = getDayString(day);
                 const isSelected = dayStr === selectedDay;
                 const total = totalForDay(day);
+                const weekend = isWeekend(day);
 
                 return (
                   <tr
                     key={day}
-                    className={`transition-colors group ${isSelected ? 'bg-neutral-900/50' : 'hover:bg-neutral-900/20'}`}
+                    className={`transition-colors group border-b border-neutral-900/20 ${
+                      isSelected
+                        ? 'bg-neutral-900/60'
+                        : weekend
+                        ? 'bg-neutral-950/60 hover:bg-neutral-900/30'
+                        : 'hover:bg-neutral-900/20'
+                    }`}
                   >
+                    {/* Day number */}
                     <td
-                      className={`p-1 font-bold select-none transition-colors cursor-pointer ${isSelected ? 'text-emerald-400' : 'text-neutral-700 group-hover:text-neutral-400'}`}
+                      className={`p-1 pl-2 font-bold select-none transition-colors cursor-pointer text-sm ${
+                        isSelected ? 'text-emerald-400' : weekend ? 'text-neutral-600 group-hover:text-neutral-400' : 'text-neutral-600 group-hover:text-neutral-300'
+                      }`}
                       onClick={() => onDayClick(day)}
                     >
                       {String(day).padStart(2, '0')}
                     </td>
 
+                    {/* Day of week */}
+                    <td className={`p-1 text-[9px] select-none ${weekend ? 'text-neutral-700' : 'text-neutral-800'}`}>
+                      {getDow(day)}
+                    </td>
+
+                    {/* Goal cells */}
                     {goals.map(goal => {
                       const mins = getMinutes(day, goal.id);
                       return (
                         <td key={goal.id} className="p-0.5">
                           <div
                             onClick={() => onDayClick(day)}
-                            title={mins > 0 ? `${mins} min on ${goal.name}` : `Click to log on ${goal.name}`}
+                            title={mins > 0 ? `${formatMinutes(mins)} on ${goal.name}` : `Log time for ${goal.name}`}
                             className={`
-                              mx-auto w-full max-w-[100px] h-6
+                              mx-auto h-7 w-full
                               flex items-center justify-center
                               border rounded cursor-pointer
-                              transition-all hover:opacity-90
+                              transition-all hover:opacity-80 hover:scale-[0.97]
+                              text-[10px]
                               ${getIntensityClass(mins)}
-                              ${isSelected ? 'ring-1 ring-emerald-500/40' : ''}
+                              ${isSelected ? 'ring-1 ring-emerald-500/50' : ''}
                             `}
                           >
                             {formatMinutes(mins)}
@@ -116,9 +145,11 @@ export const MatrixHeatmap: React.FC<MatrixProps> = ({
                       );
                     })}
 
-                    {/* Daily total column */}
-                    <td className="p-0.5">
-                      <div className={`mx-auto w-full max-w-[60px] h-6 flex items-center justify-center text-center ${total > 0 ? 'text-neutral-400' : 'text-neutral-800'}`}>
+                    {/* Daily total */}
+                    <td className="p-0.5 pr-2">
+                      <div className={`mx-auto h-7 flex items-center justify-center font-bold text-[10px] ${
+                        total > 0 ? 'text-neutral-400' : 'text-neutral-800'
+                      }`}>
                         {total > 0 ? formatMinutes(total) : '·'}
                       </div>
                     </td>
@@ -126,6 +157,32 @@ export const MatrixHeatmap: React.FC<MatrixProps> = ({
                 );
               })}
             </tbody>
+            {/* Footer: column totals */}
+            <tfoot>
+              <tr className="border-t border-neutral-800">
+                <td colSpan={2} className="p-2 text-[10px] text-neutral-700 font-bold">TOTAL</td>
+                {goals.map(g => {
+                  const total = Array.from({ length: daysInMonth }, (_, i) => i + 1)
+                    .reduce((sum, d) => sum + getMinutes(d, g.id), 0);
+                  return (
+                    <td key={g.id} className="p-2 text-center">
+                      <span className={`text-[10px] font-bold ${total > 0 ? '' : 'text-neutral-800'}`}
+                        style={total > 0 ? { color: g.color } : {}}>
+                        {total > 0 ? formatMinutes(total) : '·'}
+                      </span>
+                    </td>
+                  );
+                })}
+                <td className="p-2 text-center">
+                  <span className="text-[10px] font-bold text-neutral-400">
+                    {(() => {
+                      const t = Array.from({ length: daysInMonth }, (_, i) => i + 1).reduce((s, d) => s + totalForDay(d), 0);
+                      return t > 0 ? formatMinutes(t) : '·';
+                    })()}
+                  </span>
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       )}

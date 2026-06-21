@@ -11,4 +11,6 @@ import java.util.UUID;
 public interface WorkAreaRepository extends JpaRepository<WorkArea, UUID> {
 
     List<WorkArea> findByGoalIdOrderByName(UUID goalId);
+
+    void deleteByGoalId(UUID goalId);
 }

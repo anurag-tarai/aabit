@@ -56,6 +56,35 @@ public class SprintService {
     }
 
     @Transactional
+    public SprintResponse updateSprint(UUID sprintId, SprintRequest req) {
+        UUID userId = securityUtils.getCurrentUserId();
+        Sprint sprint = getOwnedSprint(sprintId, userId);
+
+        // If dates changed, validate no overlap with other sprints
+        if (!sprint.getStartDate().equals(req.startDate()) || !sprint.getEndDate().equals(req.endDate())) {
+            boolean hasOverlap = sprintRepository.hasOverlappingSprintExcluding(userId, req.startDate(), req.endDate(), sprintId);
+            if (hasOverlap) {
+                throw new IllegalArgumentException("Updated date range overlaps with another sprint.");
+            }
+        }
+
+        sprint.setName(req.name());
+        sprint.setStartDate(req.startDate());
+        sprint.setEndDate(req.endDate());
+        return SprintResponse.from(sprintRepository.save(sprint));
+    }
+
+    @Transactional
+    public void deleteSprint(UUID sprintId) {
+        UUID userId = securityUtils.getCurrentUserId();
+        Sprint sprint = getOwnedSprint(sprintId, userId);
+        // Remove sprint-goal associations first
+        sprintGoalRepository.deleteBySprintId(sprintId);
+        // Time logs referencing this sprint become unlinked (sprintId nullable) — no cascade needed
+        sprintRepository.delete(sprint);
+    }
+
+    @Transactional
     public SprintResponse completeSprint(UUID sprintId) {
         UUID userId = securityUtils.getCurrentUserId();
         Sprint sprint = getOwnedSprint(sprintId, userId);
@@ -92,13 +121,35 @@ public class SprintService {
     }
 
     @Transactional
+    public GoalResponse updateGoal(UUID goalId, GoalRequest req) {
+        UUID userId = securityUtils.getCurrentUserId();
+        Goal goal = getOwnedGoal(goalId, userId);
+        goal.setName(req.name());
+        if (req.description() != null) goal.setDescription(req.description());
+        if (req.color() != null && !req.color().isBlank()) goal.setColor(req.color());
+        Goal saved = goalRepository.save(goal);
+        return GoalResponse.from(saved, workAreaRepository.findByGoalIdOrderByName(goalId));
+    }
+
+    @Transactional
+    public void deleteGoal(UUID goalId) {
+        UUID userId = securityUtils.getCurrentUserId();
+        Goal goal = getOwnedGoal(goalId, userId);
+        // Remove sprint-goal associations
+        sprintGoalRepository.deleteByGoalId(goalId);
+        // Work areas cascade delete via DB constraint or handle explicitly
+        workAreaRepository.deleteByGoalId(goalId);
+        goalRepository.delete(goal);
+    }
+
+    @Transactional
     public void assignGoalToSprint(UUID sprintId, UUID goalId) {
         UUID userId = securityUtils.getCurrentUserId();
         getOwnedSprint(sprintId, userId);
         getOwnedGoal(goalId, userId);
 
         if (sprintGoalRepository.existsBySprintIdAndGoalId(sprintId, goalId)) {
-            return; // Idempotent — already linked
+            return;
         }
 
         sprintGoalRepository.save(new SprintGoal(null, sprintId, goalId, 1));
@@ -128,20 +179,30 @@ public class SprintService {
                 .stream().map(WorkAreaResponse::from).toList();
     }
 
+    @Transactional
+    public void deleteWorkArea(UUID goalId, UUID workAreaId) {
+        UUID userId = securityUtils.getCurrentUserId();
+        getOwnedGoal(goalId, userId);
+        WorkArea wa = workAreaRepository.findById(workAreaId)
+                .orElseThrow(() -> new IllegalArgumentException("Work area not found."));
+        if (!wa.getGoalId().equals(goalId)) {
+            throw new IllegalArgumentException("Work area does not belong to this goal.");
+        }
+        workAreaRepository.delete(wa);
+    }
+
     // ─── TimeLog ──────────────────────────────────────────────────────────────
 
     @Transactional
     public TimeLogResponse logTime(TimeLogRequest req) {
         UUID userId = securityUtils.getCurrentUserId();
 
-        // Validate work area belongs to goal
         WorkArea wa = workAreaRepository.findById(req.workAreaId())
                 .orElseThrow(() -> new IllegalArgumentException("Work area not found."));
         if (!wa.getGoalId().equals(req.goalId())) {
             throw new IllegalArgumentException("Work area does not belong to the selected goal.");
         }
 
-        // No overlapping time windows
         if (timeLogRepository.hasTimelineCollision(userId, req.startTime(), req.endTime())) {
             throw new IllegalStateException("This time period overlaps with an existing log entry.");
         }
@@ -153,6 +214,17 @@ public class SprintService {
                 req.startTime(), req.endTime(), minutes, req.note(), Instant.now()
         );
         return TimeLogResponse.from(timeLogRepository.save(log));
+    }
+
+    @Transactional
+    public void deleteTimeLog(UUID timeLogId) {
+        UUID userId = securityUtils.getCurrentUserId();
+        var log = timeLogRepository.findById(timeLogId)
+                .orElseThrow(() -> new IllegalArgumentException("Time log not found."));
+        if (!log.getUserId().equals(userId)) {
+            throw new SecurityException("Access denied.");
+        }
+        timeLogRepository.delete(log);
     }
 
     @Transactional(readOnly = true)

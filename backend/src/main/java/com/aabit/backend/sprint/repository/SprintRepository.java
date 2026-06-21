@@ -16,7 +16,6 @@ public interface SprintRepository extends JpaRepository<Sprint, UUID> {
 
     List<Sprint> findByUserIdOrderByStartDateDesc(UUID userId);
 
-    // The sprint whose date range contains today
     @Query("""
         SELECT s FROM Sprint s
         WHERE s.userId = :userId
@@ -26,7 +25,6 @@ public interface SprintRepository extends JpaRepository<Sprint, UUID> {
     """)
     Optional<Sprint> findCurrentSprint(@Param("userId") UUID userId, @Param("today") LocalDate today);
 
-    // Overlap check: reject if any sprint for this user overlaps the given window
     @Query("""
         SELECT COUNT(s) > 0 FROM Sprint s
         WHERE s.userId = :userId
@@ -37,5 +35,19 @@ public interface SprintRepository extends JpaRepository<Sprint, UUID> {
             @Param("userId") UUID userId,
             @Param("startDate") LocalDate startDate,
             @Param("endDate") LocalDate endDate
+    );
+
+    @Query("""
+        SELECT COUNT(s) > 0 FROM Sprint s
+        WHERE s.userId = :userId
+          AND s.id <> :excludeId
+          AND s.startDate <= :endDate
+          AND s.endDate >= :startDate
+    """)
+    boolean hasOverlappingSprintExcluding(
+            @Param("userId") UUID userId,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate,
+            @Param("excludeId") UUID excludeId
     );
 }

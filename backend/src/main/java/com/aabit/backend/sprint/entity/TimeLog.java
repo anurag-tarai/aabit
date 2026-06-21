@@ -27,7 +27,7 @@ public class TimeLog {
     @Column(name = "work_area_id", nullable = false)
     private UUID workAreaId;
 
-    // Nullable: allows logging time outside of any sprint
+    // Nullable: allows logging time outside any sprint
     @Column(name = "sprint_id")
     private UUID sprintId;
 

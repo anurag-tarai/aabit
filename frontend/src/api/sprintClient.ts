@@ -65,6 +65,12 @@ export const sprintApi = {
   getCurrentSprint: () =>
     api.get<Sprint>('/sprints/current'),
 
+  updateSprint: (sprintId: string, payload: { name: string; startDate: string; endDate: string }) =>
+    api.patch<Sprint>(`/sprints/${sprintId}`, payload),
+
+  deleteSprint: (sprintId: string) =>
+    api.delete<void>(`/sprints/${sprintId}`),
+
   completeSprint: (sprintId: string) =>
     api.patch<Sprint>(`/sprints/${sprintId}/complete`),
 
@@ -100,6 +106,9 @@ export const sprintApi = {
     note: string;
   }) => api.post<TimeLog>('/sprints/timelogs', payload),
 
+  deleteTimeLog: (timeLogId: string) =>
+    api.delete<void>(`/sprints/timelogs/${timeLogId}`),
+
   // Global goal pool
   getAllGoals: () =>
     api.get<Goal[]>('/goals'),
@@ -107,10 +116,19 @@ export const sprintApi = {
   createGoal: (payload: { name: string; color: string; description?: string }) =>
     api.post<Goal>('/goals', payload),
 
+  updateGoal: (goalId: string, payload: { name: string; color: string; description?: string }) =>
+    api.patch<Goal>(`/goals/${goalId}`, payload),
+
+  deleteGoal: (goalId: string) =>
+    api.delete<void>(`/goals/${goalId}`),
+
   // Work areas
   getWorkAreas: (goalId: string) =>
     api.get<WorkArea[]>(`/goals/${goalId}/work-areas`),
 
   createWorkArea: (goalId: string, payload: { name: string; description?: string }) =>
     api.post<WorkArea>(`/goals/${goalId}/work-areas`, payload),
+
+  deleteWorkArea: (goalId: string, workAreaId: string) =>
+    api.delete<void>(`/goals/${goalId}/work-areas/${workAreaId}`),
 };

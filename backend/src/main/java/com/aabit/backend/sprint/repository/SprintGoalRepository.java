@@ -14,5 +14,9 @@ public interface SprintGoalRepository extends JpaRepository<SprintGoal, UUID> {
 
     void deleteBySprintIdAndGoalId(UUID sprintId, UUID goalId);
 
+    void deleteBySprintId(UUID sprintId);
+
+    void deleteByGoalId(UUID goalId);
+
     boolean existsBySprintIdAndGoalId(UUID sprintId, UUID goalId);
 }

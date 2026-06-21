@@ -28,11 +28,23 @@ public class SprintController {
         return ResponseEntity.ok(sprintService.getAllSprints());
     }
 
-    // Returns the sprint whose date range contains today. 204 if none.
     @GetMapping("/current")
     public ResponseEntity<SprintResponse> getCurrentSprint() {
         SprintResponse sprint = sprintService.getCurrentSprint();
         return sprint != null ? ResponseEntity.ok(sprint) : ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{sprintId}")
+    public ResponseEntity<SprintResponse> updateSprint(
+            @PathVariable UUID sprintId,
+            @Valid @RequestBody SprintRequest request) {
+        return ResponseEntity.ok(sprintService.updateSprint(sprintId, request));
+    }
+
+    @DeleteMapping("/{sprintId}")
+    public ResponseEntity<Void> deleteSprint(@PathVariable UUID sprintId) {
+        sprintService.deleteSprint(sprintId);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{sprintId}/complete")
@@ -88,5 +100,11 @@ public class SprintController {
     @PostMapping("/timelogs")
     public ResponseEntity<TimeLogResponse> logTime(@Valid @RequestBody TimeLogRequest request) {
         return new ResponseEntity<>(sprintService.logTime(request), HttpStatus.CREATED);
+    }
+
+    @DeleteMapping("/timelogs/{timeLogId}")
+    public ResponseEntity<Void> deleteTimeLog(@PathVariable UUID timeLogId) {
+        sprintService.deleteTimeLog(timeLogId);
+        return ResponseEntity.noContent().build();
     }
 }

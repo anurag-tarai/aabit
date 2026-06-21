@@ -28,6 +28,19 @@ public class GoalController {
         return new ResponseEntity<>(sprintService.createGoal(request), HttpStatus.CREATED);
     }
 
+    @PatchMapping("/{goalId}")
+    public ResponseEntity<GoalResponse> updateGoal(
+            @PathVariable UUID goalId,
+            @Valid @RequestBody GoalRequest request) {
+        return ResponseEntity.ok(sprintService.updateGoal(goalId, request));
+    }
+
+    @DeleteMapping("/{goalId}")
+    public ResponseEntity<Void> deleteGoal(@PathVariable UUID goalId) {
+        sprintService.deleteGoal(goalId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/{goalId}/work-areas")
     public ResponseEntity<WorkAreaResponse> addWorkArea(
             @PathVariable UUID goalId,
@@ -38,5 +51,13 @@ public class GoalController {
     @GetMapping("/{goalId}/work-areas")
     public ResponseEntity<List<WorkAreaResponse>> getWorkAreas(@PathVariable UUID goalId) {
         return ResponseEntity.ok(sprintService.getWorkAreas(goalId));
+    }
+
+    @DeleteMapping("/{goalId}/work-areas/{workAreaId}")
+    public ResponseEntity<Void> deleteWorkArea(
+            @PathVariable UUID goalId,
+            @PathVariable UUID workAreaId) {
+        sprintService.deleteWorkArea(goalId, workAreaId);
+        return ResponseEntity.noContent().build();
     }
 }

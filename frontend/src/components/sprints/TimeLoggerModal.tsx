@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { sprintApi, type Goal } from '../../api/sprintClient';
 import { Clock, Send, X } from 'lucide-react';
 
@@ -9,6 +9,29 @@ interface TimeLoggerModalProps {
   onClose: () => void;
   onSuccess: () => void;
 }
+
+// Live clock — same as in dashboard
+const LiveClock: React.FC = () => {
+  const [time, setTime] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const hh = String(time.getHours()).padStart(2, '0');
+  const mm = String(time.getMinutes()).padStart(2, '0');
+  const ss = String(time.getSeconds()).padStart(2, '0');
+  return (
+    <span className="text-emerald-400 text-xs tracking-widest tabular-nums select-none">
+      {hh}<span className="animate-pulse opacity-70">:</span>{mm}<span className="animate-pulse opacity-70">:</span>{ss}
+    </span>
+  );
+};
+
+// Quick fill current time into start or end
+const nowHHMM = () => {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
 
 export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
   sprintId,
@@ -39,7 +62,6 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
     setLoading(true);
 
     try {
-      // Build ISO 8601 timestamps in the local timezone from the selected date + time inputs
       const start = new Date(`${preselectedDate}T${startTime}:00`).toISOString();
       const end   = new Date(`${preselectedDate}T${endTime}:00`).toISOString();
 
@@ -68,10 +90,14 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
           <X size={15} />
         </button>
 
-        <div className="flex items-center gap-2 text-emerald-500 mb-4 pb-2 border-b border-neutral-900">
-          <Clock size={15} />
-          <span className="font-bold tracking-wider text-sm">LOG TIME</span>
-          <span className="ml-auto text-neutral-500 text-xs">{preselectedDate}</span>
+        {/* Header with live clock */}
+        <div className="flex items-center gap-2 mb-4 pb-2 border-b border-neutral-900">
+          <Clock size={15} className="text-emerald-500" />
+          <span className="font-bold tracking-wider text-sm text-emerald-500">LOG TIME</span>
+          <span className="text-neutral-600 text-xs">{preselectedDate}</span>
+          <span className="ml-auto">
+            <LiveClock />
+          </span>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 text-sm">
@@ -116,10 +142,19 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
             </select>
           </div>
 
-          {/* Time range */}
+          {/* Time range with NOW buttons */}
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-neutral-600 uppercase font-bold pl-0.5">Start</label>
+              <div className="flex items-center justify-between pl-0.5">
+                <label className="text-[10px] text-neutral-600 uppercase font-bold">Start</label>
+                <button
+                  type="button"
+                  onClick={() => setStartTime(nowHHMM())}
+                  className="text-[9px] text-neutral-600 hover:text-emerald-400 transition-colors"
+                >
+                  NOW
+                </button>
+              </div>
               <input
                 required
                 type="time"
@@ -129,7 +164,16 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-neutral-600 uppercase font-bold pl-0.5">End</label>
+              <div className="flex items-center justify-between pl-0.5">
+                <label className="text-[10px] text-neutral-600 uppercase font-bold">End</label>
+                <button
+                  type="button"
+                  onClick={() => setEndTime(nowHHMM())}
+                  className="text-[9px] text-neutral-600 hover:text-emerald-400 transition-colors"
+                >
+                  NOW
+                </button>
+              </div>
               <input
                 required
                 type="time"
@@ -139,6 +183,21 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
               />
             </div>
           </div>
+
+          {/* Duration preview */}
+          {startTime && endTime && endTime > startTime && (
+            <div className="text-[10px] text-emerald-700 bg-emerald-950/20 border border-emerald-900/30 rounded px-2 py-1 text-center tracking-wider">
+              {(() => {
+                const [sh, sm] = startTime.split(':').map(Number);
+                const [eh, em] = endTime.split(':').map(Number);
+                const mins = (eh * 60 + em) - (sh * 60 + sm);
+                if (mins <= 0) return '';
+                const h = Math.floor(mins / 60);
+                const m = mins % 60;
+                return `DURATION: ${h > 0 ? `${h}h ` : ''}${m > 0 ? `${m}m` : ''}`;
+              })()}
+            </div>
+          )}
 
           {/* Note */}
           <div className="flex flex-col gap-1">

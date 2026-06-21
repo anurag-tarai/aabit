@@ -9,6 +9,10 @@ spring:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+#  datasource:
+#      url: jdbc:postgresql://localhost:5432/aabit_backup_test
+#      username: postgres
+#      password: Root@123
 
   jpa:
     hibernate:
