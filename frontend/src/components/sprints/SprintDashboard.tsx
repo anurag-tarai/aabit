@@ -7,7 +7,7 @@ import { InitializeSprintModal } from './InitializeSprintModal';
 import { DayDetailPanel } from './DayDetailPanel';
 import {
   Activity, AlertTriangle, ChevronLeft, ChevronRight,
-  List, Plus, Pencil, Trash2, CheckCircle, X, Check,
+  List, Plus, Pencil, Trash2, CheckCircle, X,
 } from 'lucide-react';
 
 // ─── Live Clock ───────────────────────────────────────────────────────────────
