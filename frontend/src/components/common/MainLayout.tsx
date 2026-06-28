@@ -1,187 +1,202 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { api } from '../../api/client';
-import { LogOut, ShieldAlert, X, Power, Layers, Activity, Settings } from 'lucide-react';
-import { useFontSize } from './FontSizeContext';
-import { vault } from '../../utils/vaultCrypto';
+import { Activity, Layers, Settings, Menu, BarChart2 } from 'lucide-react';
 
-export const MainLayout = () => {
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+// ─── Types ────────────────────────────────────────────────────────────────────
+interface Position { x: number; y: number }
+
+const STORAGE_KEY = 'aabit_dock_position';
+const DEFAULT_POS: Position = { x: window.innerWidth - 64, y: window.innerHeight / 2 };
+
+function clamp(val: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, val));
+}
+
+function loadPosition(): Position {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const p = JSON.parse(raw) as Position;
+      // Re-clamp in case window was resized since last save
+      return {
+        x: clamp(p.x, 0, window.innerWidth  - 48),
+        y: clamp(p.y, 0, window.innerHeight - 48),
+      };
+    }
+  } catch {}
+  return DEFAULT_POS;
+}
+
+// ─── Floating Dock ────────────────────────────────────────────────────────────
+const FloatingDock = () => {
+  const [pos, setPos]         = useState<Position>(loadPosition);
+  const [expanded, setExpanded] = useState(false);
   const [userName, setUserName] = useState('DEV');
-  const { fontSize, increaseFontSize, decreaseFontSize } = useFontSize();
+  const navigate  = useNavigate();
+  const location  = useLocation();
 
-  const navigate = useNavigate();
-  const location = useLocation();
+  // Drag state — stored in refs so pointer handlers don't need re-creation
+  const dragging    = useRef(false);
+  const dragOffset  = useRef<Position>({ x: 0, y: 0 });
+  const hasMoved    = useRef(false);          // distinguish drag vs click
+  const dockRef     = useRef<HTMLDivElement>(null);
+  const panelRef    = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const cachedProfile = localStorage.getItem('aabit_user_profile');
-    if (cachedProfile) {
+    const cached = localStorage.getItem('aabit_user_profile');
+    if (cached) {
       try {
-        const parsed = JSON.parse(cachedProfile);
-        if (parsed?.name) {
-          setUserName(parsed.name.toUpperCase());
-        }
-      } catch (err) {
-        console.error("Failed to parse user profile context string", err);
-      }
+        const parsed = JSON.parse(cached);
+        if (parsed?.name) setUserName(parsed.name.split(' ')[0].toUpperCase());
+      } catch {}
     }
   }, []);
 
-  const handleSystemLogout = async () => {
-    try {
-      await api.post('/auth/logout');
-    } catch (err) {
-      console.error("Context clearing bypassed or server offline", err);
-    } finally {
-      // 1. Wipe volatile, in-memory cryptographic master keys safely
-      vault.lock();
+  // Close panel on outside click/tap
+  useEffect(() => {
+    const handler = (e: MouseEvent | TouchEvent) => {
+      const target = e instanceof TouchEvent ? e.touches[0]?.target : e.target;
+      if (dockRef.current && !dockRef.current.contains(target as Node)) {
+        setExpanded(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    document.addEventListener('touchstart', handler);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('touchstart', handler);
+    };
+  }, []);
 
-      // 2. Clear out persistent identity and operational tokens
-      localStorage.removeItem('aabit_session_token');
-      localStorage.removeItem('aabit_user_profile');
-      
-      // 3. Clear out all variant initialization flags and tracking states
-      localStorage.removeItem('aabit_vault_init');
-      localStorage.removeItem('aabit_vault_initialized');
-      localStorage.removeItem('isAuthenticated');
+  // ── Pointer drag handlers ──────────────────────────────────────────────────
+  const onPointerDown = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+    // Only drag with primary button / single touch
+    if (e.button > 0) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragging.current  = true;
+    hasMoved.current  = false;
+    dragOffset.current = {
+      x: e.clientX - pos.x,
+      y: e.clientY - pos.y,
+    };
+  }, [pos]);
 
-      // 4. Clear residual wrapped local envelopes out entirely
-      localStorage.removeItem('aabit_vault_pin_wrapped');
-      localStorage.removeItem('aabit_vault_phrase_wrapped');
+  const onPointerMove = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!dragging.current) return;
+    hasMoved.current = true;
+    const nextX = clamp(e.clientX - dragOffset.current.x, 0, window.innerWidth  - 48);
+    const nextY = clamp(e.clientY - dragOffset.current.y, 0, window.innerHeight - 48);
+    setPos({ x: nextX, y: nextY });
+  }, []);
 
-      window.location.href = '/auth';
+  const onPointerUp = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!dragging.current) return;
+    dragging.current = false;
+    // Persist the new position
+    const nextPos: Position = {
+      x: clamp(e.clientX - dragOffset.current.x, 0, window.innerWidth  - 48),
+      y: clamp(e.clientY - dragOffset.current.y, 0, window.innerHeight - 48),
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextPos));
+
+    // Only toggle menu if the user didn't actually drag
+    if (!hasMoved.current) {
+      setExpanded(v => !v);
     }
-  };
+  }, []);
 
   const isActive = (path: string) => location.pathname === path;
 
+  const navItems = [
+    { path: '/',           icon: Activity,  label: 'Journal'    },
+    { path: '/sprints',    icon: Layers,    label: 'Sprints'    },
+    { path: '/visualizer', icon: BarChart2, label: 'Visualizer' },
+    { path: '/settings',   icon: Settings,  label: 'Settings'   },
+  ];
+
+  // Decide whether panel opens left or right based on dock position
+  const openLeft = pos.x > window.innerWidth / 2;
+
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#e5e5e5] font-sans p-3 sm:p-6 md:p-8 flex flex-col items-center selection:bg-neutral-800 selection:text-white">
-      <div className="w-full max-w-[95vw] sm:max-w-7xl flex flex-col gap-5 transition-all duration-300">
-
-        {/* Dynamic Multi-State System Status Bar Layout */}
-        <div className="relative overflow-hidden border-b border-neutral-800 pb-3 tracking-wider min-h-[40px] sm:min-h-[28px]">
-
-          {/* State A: Responsive Grid Row */}
-          <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] font-mono text-neutral-500 transition-all duration-200 transform ${
-            showLogoutConfirm ? '-translate-y-12 opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
-          }`}>
-            <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
-              <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                <span className="text-neutral-400 font-bold tracking-tight">{userName}</span>
-                <span className="text-neutral-600">//</span>
-                <span>COGNITIVE_CORE_V1</span>
-              </div>
-              <div className="sm:hidden text-neutral-600 text-[10px]">
-                {new Date().toLocaleDateString([], { month: 'short', day: '2-digit' })}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto border-t border-neutral-900/60 pt-2 sm:pt-0 sm:border-0">
-              {/* Font Scaler Controls Container */}
-              <div className="flex items-center border border-neutral-800/60 bg-neutral-900/40 rounded px-1.5 py-0.5 gap-2 text-[10px]">
-                <button
-                  onClick={decreaseFontSize}
-                  disabled={fontSize === 'sm'}
-                  className="hover:text-white font-bold disabled:opacity-30 transition-all cursor-pointer outline-none px-0.5"
-                  title="Scale Font Down"
-                >
-                  A-
-                </button>
-                <span className="text-[9px] text-neutral-600 font-bold uppercase tracking-widest select-none">
-                  {fontSize}
-                </span>
-                <button
-                  onClick={increaseFontSize}
-                  disabled={fontSize === 'xl'}
-                  className="hover:text-white font-bold disabled:opacity-30 transition-all cursor-pointer outline-none px-0.5"
-                  title="Scale Font Up"
-                >
-                  A+
-                </button>
-              </div>
-
-              <div className="hidden sm:block select-none text-neutral-400">
-                {new Date().toLocaleDateString([], { weekday: 'short', month: 'short', day: '2-digit' })}
-              </div>
-
-              <button
-                onClick={() => setShowLogoutConfirm(true)}
-                className="flex items-center gap-1.5 text-[10px] text-red-500/80 hover:text-red-400 font-bold border border-red-950/40 hover:border-red-900/60 bg-red-950/10 hover:bg-red-950/30 px-2.5 py-0.5 rounded transition-all outline-none cursor-pointer"
-              >
-                <LogOut size={11} /> [ SHUTDOWN ]
-              </button>
-            </div>
-          </div>
-
-          {/* State B: Session Termination Drawer */}
-          <div className={`absolute inset-0 flex items-center justify-between text-[11px] font-mono bg-red-950/10 border border-red-900/30 rounded px-3 py-1 transition-all duration-200 transform ${
-            showLogoutConfirm ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0 pointer-events-none'
-          }`}>
-            <div className="flex items-center gap-2 text-red-400 font-bold">
-              <ShieldAlert size={12} className="animate-bounce" />
-              <span className="hidden sm:inline">TERMINATE_SECURE_SESSION_CORE?</span>
-              <span className="sm:hidden text-[10px]">SHUTDOWN CORE?</span>
-            </div>
-
+    <div
+      ref={dockRef}
+      style={{ position: 'fixed', left: pos.x, top: pos.y, zIndex: 9999 }}
+    >
+      {/* ── Expanded nav panel ─────────────────────────────────────────────── */}
+      {expanded && (
+        <div
+          ref={panelRef}
+          style={{ [openLeft ? 'right' : 'left']: 52 }}
+          className={`
+            absolute top-1/2 -translate-y-1/2
+            flex flex-col gap-0.5
+            bg-neutral-950/95 border border-neutral-800
+            rounded-xl shadow-2xl shadow-black/60 backdrop-blur-md
+            py-2 w-44 animate-in fade-in zoom-in-95 duration-150 origin-left
+          `}
+        >
+          {/* User chip */}
+          <div className="px-4 pt-2 pb-2 border-b border-neutral-800/60 mb-1">
             <div className="flex items-center gap-2">
-              <button
-                onClick={() => setShowLogoutConfirm(false)}
-                className="flex items-center gap-1 text-[10px] text-neutral-400 hover:text-white border border-neutral-800 bg-neutral-900 px-2 py-0.5 rounded transition-all outline-none cursor-pointer"
-              >
-                <X size={10} /> ABORT
-              </button>
-              <button
-                onClick={handleSystemLogout}
-                className="flex items-center gap-1 text-[10px] bg-red-600 hover:bg-red-500 text-white font-bold px-2.5 py-0.5 rounded shadow-lg shadow-red-950/50 transition-all outline-none cursor-pointer"
-              >
-                <Power size={10} /> CONFIRM
-              </button>
+              <div className="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center text-[10px] font-bold text-black">
+                {userName[0]}
+              </div>
+              <span className="text-xs font-semibold text-neutral-300 tracking-wide">{userName}</span>
             </div>
           </div>
 
+          {/* Nav items */}
+          <div className="px-2">
+            {navItems.map(({ path, icon: Icon, label }) => (
+              <button
+                key={path}
+                onClick={() => { navigate(path); setExpanded(false); }}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition-colors mb-0.5 ${
+                  isActive(path)
+                    ? 'bg-neutral-800 text-white font-semibold'
+                    : 'text-neutral-400 hover:text-white hover:bg-neutral-900'
+                }`}
+              >
+                <Icon size={13} />
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
+      )}
 
-        {/* Plug-and-Play Cyberpunk 4-Tabbed Navigation Bar */}
-        <div className="grid grid-cols-4 gap-2 text-center font-mono text-[11px]">
-          <button
-            onClick={() => navigate('/')}
-            className={`flex items-center justify-center gap-1.5 py-2 border rounded transition-all cursor-pointer ${
-              isActive('/') ? 'bg-neutral-900 border-neutral-700 text-white shadow-sm font-bold' : 'border-neutral-900 text-neutral-500 hover:text-neutral-300 hover:border-neutral-800 bg-black'
-            }`}
-          >
-            <Activity size={12} />
-            <span>EXPERIENCE</span>
-          </button>
+      {/* ── Draggable toggle button ─────────────────────────────────────────── */}
+      <button
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        style={{ touchAction: 'none', cursor: dragging.current ? 'grabbing' : 'grab' }}
+        className={`
+          w-12 h-12 rounded-full flex items-center justify-center
+          border shadow-lg shadow-black/50 transition-colors duration-150 select-none
+          ${expanded
+            ? 'bg-neutral-800 border-neutral-600 text-white'
+            : 'bg-neutral-950 border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-600'
+          }
+        `}
+        title="Menu (drag to move)"
+      >
+        <Menu size={16} />
+      </button>
+    </div>
+  );
+};
 
-
-          <button
-            onClick={() => navigate('/sprints')}
-            className={`flex items-center justify-center gap-1.5 py-2 border rounded transition-all cursor-pointer ${
-              isActive('/sprints') ? 'bg-neutral-900 border-neutral-700 text-white shadow-sm font-bold' : 'border-neutral-900 text-neutral-500 hover:text-neutral-300 hover:border-neutral-800 bg-black'
-            }`}
-          >
-            <Layers size={12} />
-            <span>SPRINTS</span>
-          </button>
-
-          <button
-            onClick={() => navigate('/settings')}
-            className={`flex items-center justify-center gap-1.5 py-2 border rounded transition-all cursor-pointer ${
-              isActive('/settings') ? 'bg-neutral-900 border-neutral-700 text-white shadow-sm font-bold' : 'border-neutral-900 text-neutral-500 hover:text-neutral-300 hover:border-neutral-800 bg-black'
-            }`}
-          >
-            <Settings size={12} />
-            <span>SETTINGS</span>
-          </button>
-        </div>
-
-        {/* Master Screen Mount Slot */}
+// ─── Layout ───────────────────────────────────────────────────────────────────
+export const MainLayout = () => {
+  return (
+    <div className="min-h-screen bg-[#0a0a0a] text-[#e5e5e5] font-sans selection:bg-neutral-800 selection:text-white">
+      <FloatingDock />
+      {/* No forced right-padding needed anymore — dock floats freely */}
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-10">
         <main className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
           <Outlet />
         </main>
-
       </div>
     </div>
   );

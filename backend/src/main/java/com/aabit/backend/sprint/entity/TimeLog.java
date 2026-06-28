@@ -14,6 +14,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TimeLog {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -21,13 +22,19 @@ public class TimeLog {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
-    @Column(name = "goal_id", nullable = false)
+    /** Null for anonymous logs */
+    @Column(name = "goal_id")
     private UUID goalId;
 
-    @Column(name = "work_area_id", nullable = false)
+    /** Null for anonymous logs */
+    @Column(name = "work_area_id")
     private UUID workAreaId;
 
-    // Nullable: allows logging time outside any sprint
+    /** Non-null only for anonymous logs; null for goal-linked logs */
+    @Column(name = "anonymous_name")
+    private String anonymousName;
+
+    /** Nullable: allows logging time outside any sprint */
     @Column(name = "sprint_id")
     private UUID sprintId;
 
@@ -44,4 +51,10 @@ public class TimeLog {
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
+
+    // ─── Factory helpers ────────────────────────────────────────
+
+    public boolean isAnonymous() {
+        return anonymousName != null;
+    }
 }

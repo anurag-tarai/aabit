@@ -7,19 +7,15 @@ import java.time.Instant;
 import java.util.UUID;
 
 /**
- * Two valid modes:
- *   GOAL MODE:      goalId + workAreaId present, anonymousName null
- *   ANONYMOUS MODE: anonymousName present, goalId + workAreaId null
+ * Payload for PATCH /api/v1/sprints/timelogs/{id}
+ * Same two-mode semantics as TimeLogRequest.
  */
-public record TimeLogRequest(
+public record UpdateTimeLogRequest(
         UUID goalId,
         UUID workAreaId,
 
         @Size(max = 255)
         String anonymousName,
-
-        // Nullable: log can exist outside of a sprint
-        UUID sprintId,
 
         @NotNull(message = "Start time is required")
         Instant startTime,
@@ -30,8 +26,7 @@ public record TimeLogRequest(
         @Size(max = 2000)
         String note
 ) {
-    public TimeLogRequest {
-        // Cross-field mode validation
+    public UpdateTimeLogRequest {
         boolean isGoalMode      = goalId != null && workAreaId != null;
         boolean isAnonymousMode = anonymousName != null && !anonymousName.isBlank();
 
@@ -42,10 +37,6 @@ public record TimeLogRequest(
         if (isGoalMode && isAnonymousMode) {
             throw new IllegalArgumentException(
                     "Provide either (goalId + workAreaId) or anonymousName — not both.");
-        }
-        if (isGoalMode && (goalId == null || workAreaId == null)) {
-            throw new IllegalArgumentException(
-                    "Both goalId and workAreaId are required for goal-linked logs.");
         }
         if (startTime != null && endTime != null && !startTime.isBefore(endTime)) {
             throw new IllegalArgumentException("Start time must be before end time.");

@@ -7,5 +7,9 @@ public record CalendarMatrixResponse(
         String month,
         List<MatrixCell> matrix
 ) {
-    public record MatrixCell(int day, UUID goalId, int totalMinutes) {}
+    /**
+     * goalId is null for anonymous log rows — the frontend
+     * uses this null sentinel to render the "Anonymous" row.
+     */
+    public record MatrixCell(int day, UUID goalId, String anonymousLabel, int totalMinutes) {}
 }

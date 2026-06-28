@@ -237,246 +237,139 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
     );
 
   return (
-    <div className="flex flex-col gap-4">
-      {feed.map((entry) => {
+    <div className="flex flex-col gap-3">
+      {feed.map(entry => {
         const dt = formatDateTime(entry.timestamp);
 
         return (
           <div
             key={entry.id}
-            className="bg-os-surface border border-os-border rounded-lg p-4 group shadow-lg transition-all hover:border-neutral-800"
+            className="group relative bg-neutral-950 border border-neutral-800/60 rounded-xl px-6 py-5 hover:border-neutral-700 transition-colors shadow-sm"
           >
-            {/* CARD HEADER */}
-            <div className="flex justify-between items-start mb-3">
-              <span className="text-xs text-os-muted font-medium flex flex-col leading-tight">
-                <span>{dt.label}</span>
-                <span className="text-[10px] text-os-muted/70">{dt.time}</span>
-              </span>
-
-              <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={() => handleEditStart(entry)}
-                  className="text-os-muted hover:text-blue-400 transition-colors cursor-pointer"
-                >
+            {/* Timestamp + actions row */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <span className="text-sm font-semibold text-neutral-300">{dt.label}</span>
+                <span className="text-xs text-neutral-600">{dt.time}</span>
+              </div>
+              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={() => handleEditStart(entry)} className="text-neutral-600 hover:text-neutral-300 transition-colors p-1 rounded hover:bg-neutral-800">
                   <Edit2 size={13} />
                 </button>
-                <button
-                  onClick={() => handleDelete(entry.id)}
-                  className="text-os-muted hover:text-red-400 transition-colors cursor-pointer"
-                >
+                <button onClick={() => handleDelete(entry.id)} className="text-neutral-600 hover:text-red-400 transition-colors p-1 rounded hover:bg-neutral-800">
                   <Trash2 size={13} />
                 </button>
               </div>
             </div>
 
-            {/* INLINE EDIT MODE CONDITIONAL RENDERING FRAMEWORK */}
+            {/* Edit mode */}
             {editingId === entry.id ? (
-              <div
-                className="flex flex-col gap-3"
-                onClick={(e) => e.stopPropagation()}
-              >
+              <div className="flex flex-col gap-3" onClick={e => e.stopPropagation()}>
                 <MarkdownToolbar
                   textareaId={`edit-textarea-${entry.id}`}
                   content={editContent}
                   setContent={setEditContent}
                 />
-
                 <textarea
                   id={`edit-textarea-${entry.id}`}
                   value={editContent}
-                  onChange={(e) => setEditContent(e.target.value)}
-                  className={`w-full h-32 p-3 bg-os-bg border border-os-border rounded-lg text-white outline-none resize-none font-mono text-sm focus:border-gray-500 transition-all ${
-                    editIsSensitive
-                      ? "blur-[3px] focus:blur-none hover:blur-none"
-                      : ""
-                  }`}
+                  onChange={e => setEditContent(e.target.value)}
+                  className={`w-full h-40 p-4 bg-neutral-900 border border-neutral-700 rounded-lg text-neutral-200 outline-none resize-none text-sm leading-relaxed focus:border-neutral-500 transition-colors ${editIsSensitive ? 'blur-[3px] focus:blur-none hover:blur-none' : ''}`}
                 />
-
-                {/* UPDATED: Informational text helper shows updated code syntax styling context */}
                 {editLocation && (
-                  <p className="text-[11px] text-green-400 bg-os-bg/50 border border-os-border/50 rounded-md p-2 font-mono break-words">
-                    Will update inside code block: 📍 {editLocation}
+                  <p className="text-[11px] text-emerald-500 bg-emerald-950/20 border border-emerald-900/30 rounded-lg p-2">
+                    📍 {editLocation}
                   </p>
                 )}
 
-                {/* TAG CONSOLE DROPDOWN SELECTOR */}
+                {/* Tag input */}
                 <div className="relative">
-                  <div className="flex items-center gap-2 p-2 bg-os-bg border border-os-border rounded-lg focus-within:border-gray-500 transition-colors">
-                    <Hash size={14} className="text-os-muted" />
+                  <div className="flex items-center gap-2 px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-lg focus-within:border-neutral-500 transition-colors">
+                    <Hash size={13} className="text-neutral-600" />
                     <input
                       type="text"
                       value={editTagInput}
-                      onChange={(e) => {
-                        setEditTagInput(e.target.value);
-                        setShowEditDropdown(true);
-                      }}
+                      onChange={e => { setEditTagInput(e.target.value); setShowEditDropdown(true); }}
                       onFocus={() => setShowEditDropdown(true)}
                       onKeyDown={handleTagInputKeyDown}
-                      placeholder="Attach system tokens... (Press Enter to spawn new tag)"
-                      className="bg-transparent text-xs w-full outline-none text-white placeholder-os-muted"
+                      placeholder="Add tags..."
+                      className="bg-transparent text-sm w-full outline-none text-white placeholder-neutral-600"
                     />
                   </div>
-
                   {showEditDropdown && editTagInput && (
-                    <div className="absolute top-full left-0 w-full mt-1 bg-os-surface border border-os-border rounded-lg shadow-2xl z-30 max-h-32 overflow-y-auto">
-                      {filteredEditTags.map((tag) => (
-                        <button
-                          key={tag.id}
-                          type="button"
-                          onClick={() => {
-                            const clean = tag.name.trim().toLowerCase();
-                            if (!editSelectedTags.includes(clean)) {
-                              setEditSelectedTags([...editSelectedTags, clean]);
-                            }
-                            setEditTagInput("");
-                            setShowEditDropdown(false);
-                          }}
-                          className="w-full text-left px-3 py-2 text-xs hover:bg-os-bg text-gray-200 transition-colors cursor-pointer"
-                        >
+                    <div className="absolute top-full left-0 w-full mt-1 bg-neutral-900 border border-neutral-700 rounded-lg shadow-xl z-30 max-h-32 overflow-y-auto">
+                      {filteredEditTags.map(tag => (
+                        <button key={tag.id} type="button"
+                          onClick={() => { const c = tag.name.trim().toLowerCase(); if (!editSelectedTags.includes(c)) setEditSelectedTags([...editSelectedTags, c]); setEditTagInput(''); setShowEditDropdown(false); }}
+                          className="w-full text-left px-3 py-2 text-sm hover:bg-neutral-800 text-neutral-300 transition-colors">
                           #{tag.name}
                         </button>
                       ))}
-
-                      {!filteredEditTags.find(
-                        (t) =>
-                          t.name.toLowerCase() ===
-                          editTagInput.toLowerCase().trim(),
-                      ) &&
-                        !editSelectedTags.includes(
-                          editTagInput.toLowerCase().trim(),
-                        ) && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const cleanName = editTagInput
-                                .trim()
-                                .toLowerCase();
-                              if (
-                                cleanName &&
-                                !editSelectedTags.includes(cleanName)
-                              ) {
-                                setEditSelectedTags([
-                                  ...editSelectedTags,
-                                  cleanName,
-                                ]);
-                              }
-                              setEditTagInput("");
-                              setShowEditDropdown(false);
-                            }}
-                            className="w-full text-left px-3 py-2 text-xs text-blue-400 hover:bg-os-bg transition-colors cursor-pointer border-t border-os-border/30 font-medium"
-                          >
-                            Create new tag: #{editTagInput.toLowerCase().trim()}
-                          </button>
-                        )}
+                      {!filteredEditTags.find(t => t.name.toLowerCase() === editTagInput.toLowerCase().trim()) && !editSelectedTags.includes(editTagInput.toLowerCase().trim()) && (
+                        <button type="button"
+                          onClick={() => { const c = editTagInput.trim().toLowerCase(); if (c && !editSelectedTags.includes(c)) setEditSelectedTags([...editSelectedTags, c]); setEditTagInput(''); setShowEditDropdown(false); }}
+                          className="w-full text-left px-3 py-2 text-sm text-blue-400 hover:bg-neutral-800 transition-colors border-t border-neutral-700/30">
+                          Create: #{editTagInput.toLowerCase().trim()}
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
 
-                {/* ACTIVE SELECTED ACCUMULATED TAG PILLS */}
                 {editSelectedTags.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
-                    {editSelectedTags.map((tag) => (
-                      <span
-                        key={tag}
-                        onClick={() =>
-                          setEditSelectedTags(
-                            editSelectedTags.filter((t) => t !== tag),
-                          )
-                        }
-                        className="px-2 py-0.5 text-[11px] bg-os-bg border border-os-border text-gray-300 rounded cursor-pointer hover:bg-red-950/40 hover:text-red-400 hover:border-red-900/50 transition-all flex items-center gap-1"
-                      >
-                        #{tag}
-                        <X size={10} />
+                    {editSelectedTags.map(tag => (
+                      <span key={tag} onClick={() => setEditSelectedTags(editSelectedTags.filter(t => t !== tag))}
+                        className="px-2 py-0.5 text-xs bg-neutral-800 text-neutral-400 rounded-full cursor-pointer hover:bg-red-950/40 hover:text-red-400 transition-colors flex items-center gap-1">
+                        #{tag} <X size={10} />
                       </span>
                     ))}
                   </div>
                 )}
 
-                {/* EDITING INTERACTION FOOTER CONTROLS */}
-                <div className="flex justify-between items-center mt-1 pt-2 border-t border-os-border/40">
+                <div className="flex justify-between items-center pt-2 border-t border-neutral-800">
                   <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setEditIsSensitive(!editIsSensitive)}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
-                        editIsSensitive
-                          ? "bg-red-900/20 text-red-400"
-                          : "text-os-muted hover:bg-os-bg hover:text-os-text"
-                      }`}
-                    >
-                      <Lock size={14} />
-                      {editIsSensitive ? "Sensitive" : "Not Sensitive"}
+                    <button type="button" onClick={() => setEditIsSensitive(!editIsSensitive)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors ${editIsSensitive ? 'bg-red-950/30 text-red-400' : 'text-neutral-500 hover:bg-neutral-800 hover:text-neutral-300'}`}>
+                      <Lock size={13} /> {editIsSensitive ? 'Sensitive' : 'Mark sensitive'}
                     </button>
-
-                    <button
-                      type="button"
-                      onClick={fetchCurrentLocation}
-                      disabled={fetchingLocation}
-                      className="flex items-center gap-1.5 text-xs bg-os-bg border border-os-border text-os-muted hover:text-white px-2.5 py-1.5 rounded-md transition-colors cursor-pointer"
-                    >
-                      {fetchingLocation ? (
-                        <Loader2 size={13} className="animate-spin" />
-                      ) : (
-                        <MapPin
-                          size={13}
-                          className={editLocation ? "text-blue-400" : ""}
-                        />
-                      )}
-                      {editLocation ? "Update Location" : "Attach Location"}
+                    <button type="button" onClick={fetchCurrentLocation} disabled={fetchingLocation}
+                      className="flex items-center gap-1.5 text-xs text-neutral-500 hover:text-white px-3 py-1.5 rounded-lg hover:bg-neutral-800 transition-colors">
+                      {fetchingLocation ? <Loader2 size={13} className="animate-spin" /> : <MapPin size={13} className={editLocation ? 'text-emerald-400' : ''} />}
+                      {editLocation ? 'Update location' : 'Add location'}
                     </button>
                   </div>
-
                   <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        setEditingId(null);
-                        setEditLocation("");
-                      }}
-                      className="flex items-center gap-1 text-xs text-os-muted hover:text-white px-2 py-1 cursor-pointer"
-                    >
-                      <X size={14} /> Cancel
+                    <button onClick={() => { setEditingId(null); setEditLocation(''); }}
+                      className="flex items-center gap-1 text-xs text-neutral-500 hover:text-white px-3 py-1.5 rounded-lg hover:bg-neutral-800 transition-colors">
+                      <X size={13} /> Cancel
                     </button>
-                    <button
-                      onClick={() => handleEditSave(entry)}
-                      className="flex items-center gap-1 text-xs bg-green-900/40 text-green-400 hover:bg-green-900/60 px-3 py-1.5 rounded-md transition-colors cursor-pointer"
-                    >
-                      <Check size={14} /> Save
+                    <button onClick={() => handleEditSave(entry)}
+                      className="flex items-center gap-1 text-xs bg-neutral-800 hover:bg-neutral-700 text-white px-3 py-1.5 rounded-lg transition-colors font-medium">
+                      <Check size={13} /> Save
                     </button>
                   </div>
                 </div>
               </div>
             ) : (
-              /* STANDARD DISPLAY RENDER LAYER WITH BLUR CONTROL FLAGGINGS */
-              <div className="flex flex-col gap-2">
-                <div
-                  className={`text-sm max-w-none text-gray-200 ${
-                    entry.sensitive
-                      ? "blur-[4px] hover:blur-none transition-all duration-300"
-                      : ""
-                  }`}
-                >
-                  {entry.sensitive && (
-                    <div className="flex items-center gap-1 text-xs font-mono text-red-400 mb-1 select-none">
-                      <Lock size={12} /> SECURE_DATA_NODE
-                    </div>
-                  )}
-
-                  <div className="prose prose-invert prose-sm max-w-none prose-headings:text-white prose-p:text-gray-300 prose-code:text-pink-400 font-sans">
-                    <ReactMarkdown>
-                      {decryptedMap[entry.id] ?? "Decrypting..."}
-                    </ReactMarkdown>
+              /* Read mode */
+              <div className="flex flex-col gap-3">
+                {entry.sensitive && (
+                  <div className="flex items-center gap-1.5 text-[11px] text-red-400/80 mb-1">
+                    <Lock size={11} /> Sensitive
+                  </div>
+                )}
+                <div className={`text-sm leading-relaxed text-neutral-300 ${entry.sensitive ? 'blur-[4px] hover:blur-none transition-all duration-300' : ''}`}>
+                  <div className="prose prose-invert prose-sm max-w-none prose-headings:text-white prose-headings:font-semibold prose-p:text-neutral-300 prose-p:leading-relaxed prose-code:text-pink-400 prose-code:text-xs prose-a:text-blue-400">
+                    <ReactMarkdown>{decryptedMap[entry.id] ?? 'Decrypting...'}</ReactMarkdown>
                   </div>
                 </div>
 
-                {/* CARD ATTACHED FOOTER TAG BUTTON ARRAY */}
                 {entry.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-3 pt-2 border-t border-os-border/40">
-                    {entry.tags.map((tag) => (
-                      <button
-                        key={tag}
-                        onClick={() => setActiveTagFilter(tag)}
-                        className="text-[11px] font-mono text-os-muted hover:text-white bg-os-surface/40 hover:bg-os-bg px-2 py-0.5 rounded border border-os-border/60 transition-colors cursor-pointer before:content-['#']"
-                      >
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {entry.tags.map(tag => (
+                      <button key={tag} onClick={() => setActiveTagFilter(tag)}
+                        className="text-xs text-neutral-600 hover:text-neutral-300 transition-colors before:content-['#']">
                         {tag}
                       </button>
                     ))}

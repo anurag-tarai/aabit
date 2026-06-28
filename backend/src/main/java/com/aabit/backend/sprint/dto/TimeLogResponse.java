@@ -9,6 +9,7 @@ public record TimeLogResponse(
         UUID id,
         UUID goalId,
         UUID workAreaId,
+        String anonymousName,
         UUID sprintId,
         Instant startTime,
         Instant endTime,
@@ -18,9 +19,16 @@ public record TimeLogResponse(
 ) {
     public static TimeLogResponse from(TimeLog t) {
         return new TimeLogResponse(
-                t.getId(), t.getGoalId(), t.getWorkAreaId(), t.getSprintId(),
-                t.getStartTime(), t.getEndTime(), t.getDurationMinutes(),
-                t.getNote(), t.getCreatedAt()
+                t.getId(),
+                t.getGoalId(),
+                t.getWorkAreaId(),
+                t.getAnonymousName(),
+                t.getSprintId(),
+                t.getStartTime(),
+                t.getEndTime(),
+                t.getDurationMinutes(),
+                t.getNote(),
+                t.getCreatedAt()
         );
     }
 }

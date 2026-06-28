@@ -1,0 +1,147 @@
+import { useState } from 'react';
+import { Settings as SettingsIcon, Type, ShieldCheck, LogOut } from 'lucide-react';
+import { useFontSize } from './FontSizeContext';
+import { vault } from '../../utils/vaultCrypto';
+import { api } from '../../api/client';
+import { RegeneratePhraseCard } from './RegeneratePhraseCard';
+
+// ─── Section wrapper ──────────────────────────────────────────────────────────
+const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({
+  title, icon, children,
+}) => (
+  <div className="border border-neutral-800/80 bg-neutral-950 rounded-2xl overflow-hidden">
+    <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-neutral-800/60">
+      <span className="text-neutral-500">{icon}</span>
+      <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-neutral-500">{title}</span>
+    </div>
+    <div className="px-5 py-4 flex flex-col gap-4">
+      {children}
+    </div>
+  </div>
+);
+
+// ─── Row ──────────────────────────────────────────────────────────────────────
+const Row: React.FC<{ label: string; sub?: string; right: React.ReactNode }> = ({ label, sub, right }) => (
+  <div className="flex items-center justify-between gap-4">
+    <div className="flex flex-col gap-0.5">
+      <span className="text-sm text-neutral-300 font-medium">{label}</span>
+      {sub && <span className="text-[11px] font-mono text-neutral-600">{sub}</span>}
+    </div>
+    <div className="flex-shrink-0">{right}</div>
+  </div>
+);
+
+// ─── Font size stepper ────────────────────────────────────────────────────────
+const FontStepper: React.FC = () => {
+  const { fontSize, increaseFontSize, decreaseFontSize } = useFontSize();
+  const sizes = ['sm', 'base', 'lg', 'xl'];
+  const idx   = sizes.indexOf(fontSize);
+  const labels: Record<string, string> = { sm: 'Small', base: 'Default', lg: 'Large', xl: 'X-Large' };
+
+  return (
+    <div className="flex items-center gap-2">
+      <button
+        onClick={decreaseFontSize}
+        disabled={idx === 0}
+        className="w-7 h-7 rounded-lg border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-600 disabled:opacity-25 transition-colors flex items-center justify-center text-sm font-bold"
+      >
+        −
+      </button>
+      <span className="text-xs font-mono text-neutral-300 w-16 text-center">{labels[fontSize]}</span>
+      <button
+        onClick={increaseFontSize}
+        disabled={idx === sizes.length - 1}
+        className="w-7 h-7 rounded-lg border border-neutral-800 text-neutral-400 hover:text-white hover:border-neutral-600 disabled:opacity-25 transition-colors flex items-center justify-center text-sm font-bold"
+      >
+        +
+      </button>
+    </div>
+  );
+};
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+export const Settings: React.FC = () => {
+  const isVaultUnlocked = vault.isOpen();
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try { await api.post('/auth/logout'); } catch {}
+    vault.lock();
+    ['aabit_session_token','aabit_user_profile','aabit_vault_init',
+     'aabit_vault_initialized','isAuthenticated','aabit_vault_pin_wrapped',
+     'aabit_vault_phrase_wrapped'].forEach(k => localStorage.removeItem(k));
+    window.location.href = '/auth';
+  };
+
+  return (
+    <div className="flex flex-col gap-5 max-w-xl animate-in fade-in duration-200">
+
+      {/* Page title */}
+      <div className="flex items-center gap-3 mb-1">
+        <SettingsIcon size={18} className="text-neutral-500" />
+        <div>
+          <h1 className="text-base font-bold text-white tracking-tight">Settings</h1>
+          <p className="text-[11px] font-mono text-neutral-600 mt-0.5">Appearance, security, and session</p>
+        </div>
+      </div>
+
+      {/* ── Appearance ───────────────────────────────────────────────────────── */}
+      <Section title="Appearance" icon={<Type size={13} />}>
+        <Row
+          label="Text size"
+          sub="Scales all text across the app"
+          right={<FontStepper />}
+        />
+      </Section>
+
+      {/* ── Security & Vault ─────────────────────────────────────────────────── */}
+      <Section title="Security & Vault" icon={<ShieldCheck size={13} />}>
+        {isVaultUnlocked ? (
+          <>
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span className="text-[11px] font-mono text-emerald-600">Vault unlocked</span>
+            </div>
+            <RegeneratePhraseCard />
+          </>
+        ) : (
+          <div className="border border-dashed border-neutral-800 rounded-xl p-5 text-center">
+            <p className="text-neutral-600 font-mono text-xs">Vault is locked.</p>
+            <p className="text-neutral-700 font-mono text-[10px] mt-1">
+              Unlock the Experience Vault to manage recovery phrases.
+            </p>
+          </div>
+        )}
+      </Section>
+
+      {/* ── Session ──────────────────────────────────────────────────────────── */}
+      <Section title="Session" icon={<LogOut size={13} />}>
+        <Row
+          label="Sign out"
+          sub="Locks vault and clears session"
+          right={
+            <button
+              onClick={handleLogout}
+              disabled={loggingOut}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-red-900/50 text-red-400 hover:bg-red-950/30 hover:border-red-800 transition-colors text-xs font-mono font-bold disabled:opacity-40"
+            >
+              <LogOut size={12} />
+              {loggingOut ? 'Signing out…' : 'Sign out'}
+            </button>
+          }
+        />
+      </Section>
+
+      {/* ── System info ──────────────────────────────────────────────────────── */}
+      <div className="flex gap-4 text-[10px] font-mono text-neutral-700 px-1">
+        <span>V1.0.0</span>
+        <span>·</span>
+        <span>AES-GCM-256</span>
+        <span>·</span>
+        <span>Zero-knowledge vault</span>
+      </div>
+
+    </div>
+  );
+};

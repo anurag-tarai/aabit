@@ -102,6 +102,14 @@ public class SprintController {
         return new ResponseEntity<>(sprintService.logTime(request), HttpStatus.CREATED);
     }
 
+    // ★ NEW — Edit an existing time log
+    @PatchMapping("/timelogs/{timeLogId}")
+    public ResponseEntity<TimeLogResponse> updateTimeLog(
+            @PathVariable UUID timeLogId,
+            @Valid @RequestBody UpdateTimeLogRequest request) {
+        return ResponseEntity.ok(sprintService.updateTimeLog(timeLogId, request));
+    }
+
     @DeleteMapping("/timelogs/{timeLogId}")
     public ResponseEntity<Void> deleteTimeLog(@PathVariable UUID timeLogId) {
         sprintService.deleteTimeLog(timeLogId);

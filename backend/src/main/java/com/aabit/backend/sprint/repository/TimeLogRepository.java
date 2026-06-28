@@ -43,23 +43,47 @@ public interface TimeLogRepository extends JpaRepository<TimeLog, UUID> {
             @Param("tz") String timezone
     );
 
-    // Matrix aggregation: day x goal -> total minutes for the month
-    // Returns raw Object[] rows: [day(int), goalId(uuid), totalMinutes(int)]
+    /**
+     * Matrix aggregation: day × (goal or anonymous_name) → total minutes.
+     * For goal rows:      goal_id is set,     anonymous_label is null.
+     * For anonymous rows: goal_id is null,    anonymous_label = anonymous_name.
+     */
     @Query(value = """
-        SELECT
-            CAST(EXTRACT(DAY FROM (start_time AT TIME ZONE :tz)) AS INTEGER) AS day,
-            goal_id,
-            CAST(SUM(duration_minutes) AS INTEGER) AS total_minutes
-        FROM time_log
-        WHERE user_id = :userId
-          AND sprint_id = :sprintId
-          AND TO_CHAR(start_time AT TIME ZONE :tz, 'YYYY-MM') = :month
-        GROUP BY 1, 2
-    """, nativeQuery = true)
+    SELECT
+        CAST(EXTRACT(DAY FROM (start_time AT TIME ZONE :tz)) AS INTEGER) AS day,
+        goal_id,
+        CAST(SUM(duration_minutes) AS INTEGER) AS total_minutes,
+        anonymous_name AS anonymous_label
+    FROM time_log
+    WHERE user_id  = :userId
+      AND sprint_id = :sprintId
+      AND TO_CHAR(start_time AT TIME ZONE :tz, 'YYYY-MM') = :month
+    GROUP BY 1, 2, 4
+    ORDER BY 1, 2 NULLS LAST
+""", nativeQuery = true)
     List<Object[]> getMonthlyMatrixRaw(
-            @Param("userId") UUID userId,
+            @Param("userId")   UUID userId,
             @Param("sprintId") UUID sprintId,
-            @Param("month") String month,   // format: "YYYY-MM"
-            @Param("tz") String timezone
+            @Param("month")    String month,
+            @Param("tz")       String timezone
+    );
+
+
+    /**
+     * Same overlap check as hasTimelineCollision, but ignores the log being edited.
+     */
+    @Query(value = """
+    SELECT COUNT(*) > 0
+    FROM time_logs
+    WHERE user_id = :userId
+      AND id != :excludeId
+      AND start_time < :endTime
+      AND end_time   > :startTime
+    """, nativeQuery = true)
+    boolean hasTimelineCollisionExcluding(
+            @Param("userId")    UUID userId,
+            @Param("startTime") Instant startTime,
+            @Param("endTime")   Instant endTime,
+            @Param("excludeId") UUID excludeId
     );
 }

@@ -9,7 +9,7 @@ import { VaultUnlockModal } from './VaultUnlockModal';
 import { vault } from '../../utils/vaultCrypto';
 import { api } from '../../api/client';
 import type { ExperienceResponse, Tag } from '../../api/client';
-import { Settings2, XCircle, Search, Hash, ChevronDown, Database, Activity, Loader2 } from 'lucide-react';
+import { Settings2, XCircle, Search, Hash, ChevronDown, Loader2 } from 'lucide-react';
 import { runMigration } from '../../utils/vaultMigration';
 
 interface SystemStats {
@@ -153,66 +153,54 @@ export const ExperienceDashboard = () => {
     return <VaultUnlockModal onUnlocked={() => setVaultState('ready')} />;
   }
 
-  return (
-    <div className="flex flex-col gap-8 w-full" onClick={e => e.stopPropagation()}>
+ return (
+    <div className="flex flex-col gap-6 w-full max-w-3xl mx-auto" onClick={e => e.stopPropagation()}>
 
-      <div className="flex justify-between items-center bg-os-surface/40 p-4 rounded-xl border border-os-border/60">
+      {/* ── Page header — clean, no terminal noise ── */}
+      <div className="flex items-start justify-between pt-2">
         <div>
-          <h2 className="text-xl font-bold text-white tracking-tight">Experience Logs</h2>
-          <p className="text-xs text-os-muted">Documenting historical progression nodes</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Journal</h1>
+          <p className="text-sm text-neutral-500 mt-1">
+            {stats.totalLifetimeLogs} entries · {stats.currentMonthLogs} this month
+          </p>
         </div>
         <button
           onClick={() => setIsTagManagerOpen(true)}
-          className="text-os-muted hover:text-white flex items-center gap-2 text-xs bg-os-surface border border-os-border px-3 py-1.5 rounded-lg transition-colors"
+          className="flex items-center gap-2 text-xs text-neutral-500 hover:text-white border border-neutral-800 hover:border-neutral-600 px-3 py-1.5 rounded-lg transition-colors"
         >
-          <Settings2 size={14} /> Manage Tags
+          <Settings2 size={13} /> Tags
         </button>
       </div>
 
+      {/* ── Logger ── */}
       <ExperienceLogger onLogSuccess={triggerGlobalSystemSync} />
 
-      <div className="grid grid-cols-2 gap-3 bg-os-surface/20 border border-os-border rounded-xl p-3 text-center">
-        <div className="flex items-center justify-center gap-3 border-r border-os-border/50 py-1">
-          <Database size={15} className="text-os-muted" />
-          <div className="text-left">
-            <span className="text-[10px] font-mono tracking-wider text-os-muted uppercase block leading-none mb-1">LIFETIME_LOGS</span>
-            <span className="text-sm font-mono font-bold text-white leading-none">{stats.totalLifetimeLogs}</span>
-          </div>
-        </div>
-        <div className="flex items-center justify-center gap-3 py-1">
-          <Activity size={15} className="text-os-muted" />
-          <div className="text-left">
-            <span className="text-[10px] font-mono tracking-wider text-os-muted uppercase block leading-none mb-1">MONTHLY_VELOCITY</span>
-            <span className="text-sm font-mono font-bold text-blue-400 leading-none">{stats.currentMonthLogs}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-3">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {/* ── Filter bar ── */}
+      <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <div className="relative">
-            <div className="flex items-center gap-2 bg-os-surface border border-os-border rounded-lg p-3 h-[46px] focus-within:border-gray-500 transition-colors shadow-lg">
-              <Search size={18} className="text-os-muted" />
+            <div className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 focus-within:border-neutral-600 transition-colors">
+              <Search size={14} className="text-neutral-600 flex-shrink-0" />
               <input
                 type="text"
                 value={searchTagInput}
                 onChange={e => { setSearchTagInput(e.target.value); setShowSearchDropdown(true); }}
                 onFocus={() => setShowSearchDropdown(true)}
-                placeholder="Search history metrics by tag..."
-                className="bg-transparent text-sm outline-none text-white w-full placeholder-os-muted"
+                placeholder="Filter by tag..."
+                className="bg-transparent text-sm outline-none text-white w-full placeholder-neutral-600"
               />
             </div>
             {showSearchDropdown && searchTagInput && (
-              <div className="absolute top-full left-0 w-full mt-1 bg-os-surface border border-os-border rounded-lg shadow-xl z-20 max-h-48 overflow-y-auto">
+              <div className="absolute top-full left-0 w-full mt-1 bg-neutral-900 border border-neutral-800 rounded-lg shadow-xl z-20 max-h-48 overflow-y-auto">
                 {filteredSearchTags.length > 0
                   ? filteredSearchTags.map(tag => (
                       <button key={tag.id}
                         onClick={() => { setActiveTagFilter(tag.name); setSearchTagInput(''); setShowSearchDropdown(false); }}
-                        className="w-full text-left px-4 py-2.5 text-sm hover:bg-os-bg transition-colors flex items-center gap-2 text-gray-200">
-                        <Hash size={14} className="text-os-muted" />{tag.name}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-neutral-800 transition-colors flex items-center gap-2 text-neutral-300">
+                        <Hash size={13} className="text-neutral-600" />{tag.name}
                       </button>
                     ))
-                  : <div className="px-4 py-2.5 text-sm text-os-muted italic">No matching tags.</div>
+                  : <div className="px-4 py-2.5 text-sm text-neutral-600">No matching tags.</div>
                 }
               </div>
             )}
@@ -220,33 +208,34 @@ export const ExperienceDashboard = () => {
           <TemporalFilter value={timeframe} onChange={setTimeframe} />
         </div>
 
-        <div className="flex justify-between items-center border-b border-os-border pb-2 mt-2">
-          <h3 className="text-xs font-semibold text-os-muted uppercase tracking-wider">Timeline Feed</h3>
-          {activeTagFilter && (
-            <div className="flex items-center gap-2 bg-blue-900/30 text-blue-400 px-3 py-1 rounded-full text-xs font-medium border border-blue-900/50">
-              Filtered: #{activeTagFilter}
+        {activeTagFilter && (
+          <div className="flex items-center gap-2 text-xs text-neutral-400">
+            <span>Filtered by</span>
+            <span className="flex items-center gap-1.5 bg-neutral-900 border border-neutral-800 px-2.5 py-1 rounded-full">
+              #{activeTagFilter}
               <button onClick={() => { setActiveTagFilter(null); setSearchTagInput(''); }} className="hover:text-white transition-colors">
-                <XCircle size={14} />
+                <XCircle size={12} />
               </button>
-            </div>
-          )}
-        </div>
-
-        <ExperienceFeed
-          feed={feed}
-          loading={loading}
-          allTags={allTags}
-          onMutationRequired={triggerGlobalSystemSync}
-          setActiveTagFilter={setActiveTagFilter}
-        />
-
-        {hasMore && (
-          <button onClick={loadMoreEntries} disabled={loadingMore}
-            className="w-full py-2.5 mt-2 flex items-center justify-center gap-2 text-xs font-mono font-bold tracking-wider text-os-muted hover:text-white bg-os-surface/20 hover:bg-os-surface/60 border border-os-border rounded-xl transition-all outline-none">
-            {loadingMore ? 'SYNCING_NEXT_DATASET...' : <><ChevronDown size={14} /> FETCH_OLDER_LOGS</>}
-          </button>
+            </span>
+          </div>
         )}
       </div>
+
+      {/* ── Timeline feed ── */}
+      <ExperienceFeed
+        feed={feed}
+        loading={loading}
+        allTags={allTags}
+        onMutationRequired={triggerGlobalSystemSync}
+        setActiveTagFilter={setActiveTagFilter}
+      />
+
+      {hasMore && (
+        <button onClick={loadMoreEntries} disabled={loadingMore}
+          className="w-full py-2.5 flex items-center justify-center gap-2 text-xs text-neutral-600 hover:text-neutral-300 border border-neutral-800 hover:border-neutral-700 rounded-lg transition-all">
+          {loadingMore ? 'Loading...' : <><ChevronDown size={14} /> Load older entries</>}
+        </button>
+      )}
 
       {isTagManagerOpen && (
         <TagManager onClose={() => setIsTagManagerOpen(false)} onTagsChanged={triggerGlobalSystemSync} />

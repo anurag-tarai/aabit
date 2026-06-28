@@ -60,7 +60,6 @@ public class SprintService {
         UUID userId = securityUtils.getCurrentUserId();
         Sprint sprint = getOwnedSprint(sprintId, userId);
 
-        // If dates changed, validate no overlap with other sprints
         if (!sprint.getStartDate().equals(req.startDate()) || !sprint.getEndDate().equals(req.endDate())) {
             boolean hasOverlap = sprintRepository.hasOverlappingSprintExcluding(userId, req.startDate(), req.endDate(), sprintId);
             if (hasOverlap) {
@@ -78,9 +77,7 @@ public class SprintService {
     public void deleteSprint(UUID sprintId) {
         UUID userId = securityUtils.getCurrentUserId();
         Sprint sprint = getOwnedSprint(sprintId, userId);
-        // Remove sprint-goal associations first
         sprintGoalRepository.deleteBySprintId(sprintId);
-        // Time logs referencing this sprint become unlinked (sprintId nullable) — no cascade needed
         sprintRepository.delete(sprint);
     }
 
@@ -135,9 +132,7 @@ public class SprintService {
     public void deleteGoal(UUID goalId) {
         UUID userId = securityUtils.getCurrentUserId();
         Goal goal = getOwnedGoal(goalId, userId);
-        // Remove sprint-goal associations
         sprintGoalRepository.deleteByGoalId(goalId);
-        // Work areas cascade delete via DB constraint or handle explicitly
         workAreaRepository.deleteByGoalId(goalId);
         goalRepository.delete(goal);
     }
@@ -147,11 +142,7 @@ public class SprintService {
         UUID userId = securityUtils.getCurrentUserId();
         getOwnedSprint(sprintId, userId);
         getOwnedGoal(goalId, userId);
-
-        if (sprintGoalRepository.existsBySprintIdAndGoalId(sprintId, goalId)) {
-            return;
-        }
-
+        if (sprintGoalRepository.existsBySprintIdAndGoalId(sprintId, goalId)) return;
         sprintGoalRepository.save(new SprintGoal(null, sprintId, goalId, 1));
     }
 
@@ -197,22 +188,80 @@ public class SprintService {
     public TimeLogResponse logTime(TimeLogRequest req) {
         UUID userId = securityUtils.getCurrentUserId();
 
-        WorkArea wa = workAreaRepository.findById(req.workAreaId())
-                .orElseThrow(() -> new IllegalArgumentException("Work area not found."));
-        if (!wa.getGoalId().equals(req.goalId())) {
-            throw new IllegalArgumentException("Work area does not belong to the selected goal.");
-        }
-
         if (timeLogRepository.hasTimelineCollision(userId, req.startTime(), req.endTime())) {
             throw new IllegalStateException("This time period overlaps with an existing log entry.");
         }
 
         int minutes = (int) Duration.between(req.startTime(), req.endTime()).toMinutes();
 
-        TimeLog log = new TimeLog(
-                null, userId, req.goalId(), req.workAreaId(), req.sprintId(),
-                req.startTime(), req.endTime(), minutes, req.note(), Instant.now()
-        );
+        TimeLog log;
+        if (req.isAnonymous()) {
+            log = new TimeLog(
+                    null, userId,
+                    null, null,
+                    req.anonymousName(),
+                    req.sprintId(),
+                    req.startTime(), req.endTime(),
+                    minutes, req.note(), Instant.now()
+            );
+        } else {
+            WorkArea wa = workAreaRepository.findById(req.workAreaId())
+                    .orElseThrow(() -> new IllegalArgumentException("Work area not found."));
+            if (!wa.getGoalId().equals(req.goalId())) {
+                throw new IllegalArgumentException("Work area does not belong to the selected goal.");
+            }
+            log = new TimeLog(
+                    null, userId,
+                    req.goalId(), req.workAreaId(),
+                    null,
+                    req.sprintId(),
+                    req.startTime(), req.endTime(),
+                    minutes, req.note(), Instant.now()
+            );
+        }
+
+        return TimeLogResponse.from(timeLogRepository.save(log));
+    }
+
+    // ★ NEW — update an existing time log
+    @Transactional
+    public TimeLogResponse updateTimeLog(UUID timeLogId, UpdateTimeLogRequest req) {
+        UUID userId = securityUtils.getCurrentUserId();
+
+        TimeLog log = timeLogRepository.findById(timeLogId)
+                .orElseThrow(() -> new IllegalArgumentException("Time log not found."));
+
+        if (!log.getUserId().equals(userId)) {
+            throw new SecurityException("Access denied.");
+        }
+
+        // Check for timeline collision, excluding the log being edited
+        if (timeLogRepository.hasTimelineCollisionExcluding(userId, req.startTime(), req.endTime(), timeLogId)) {
+            throw new IllegalStateException("This time period overlaps with an existing log entry.");
+        }
+
+        int minutes = (int) Duration.between(req.startTime(), req.endTime()).toMinutes();
+
+        if (req.isAnonymous()) {
+            log.setGoalId(null);
+            log.setWorkAreaId(null);
+            log.setAnonymousName(req.anonymousName());
+        } else {
+            WorkArea wa = workAreaRepository.findById(req.workAreaId())
+                    .orElseThrow(() -> new IllegalArgumentException("Work area not found."));
+            if (!wa.getGoalId().equals(req.goalId())) {
+                throw new IllegalArgumentException("Work area does not belong to the selected goal.");
+            }
+            log.setGoalId(req.goalId());
+            log.setWorkAreaId(req.workAreaId());
+            log.setAnonymousName(null);
+        }
+
+        log.setStartTime(req.startTime());
+        log.setEndTime(req.endTime());
+        log.setDurationMinutes(minutes);
+        log.setNote(req.note());
+
         return TimeLogResponse.from(timeLogRepository.save(log));
     }
 
@@ -240,14 +289,16 @@ public class SprintService {
         UUID userId = securityUtils.getCurrentUserId();
         String tz = normalizeTimezone(timezone);
 
-        List<MatrixCell> cells = timeLogRepository.getMonthlyMatrixRaw(userId, sprintId, month, tz)
-                .stream()
-                .map(row -> new MatrixCell(
-                        ((Number) row[0]).intValue(),
-                        UUID.fromString(row[1].toString()),
-                        ((Number) row[2]).intValue()
-                ))
-                .toList();
+        List<CalendarMatrixResponse.MatrixCell> cells =
+                timeLogRepository.getMonthlyMatrixRaw(userId, sprintId, month, tz)
+                        .stream()
+                        .map(row -> new CalendarMatrixResponse.MatrixCell(
+                                ((Number) row[0]).intValue(),
+                                row[1] != null ? UUID.fromString(row[1].toString()) : null,
+                                row[3] != null ? row[3].toString() : null,
+                                ((Number) row[2]).intValue()
+                        ))
+                        .toList();
 
         return new CalendarMatrixResponse(month, cells);
     }
