@@ -4,6 +4,7 @@ import com.aabit.backend.experience.dto.ExperienceRequest;
 import com.aabit.backend.experience.dto.ExperienceResponse;
 import com.aabit.backend.experience.dto.SystemStatsResponse;
 import com.aabit.backend.experience.service.ExperienceService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -25,7 +27,7 @@ public class ExperienceController {
 
     @PostMapping
     public ResponseEntity<ExperienceResponse> createEntry(
-            @RequestBody ExperienceRequest request,
+            @Valid @RequestBody ExperienceRequest request,
             @AuthenticationPrincipal String email) {
         return ResponseEntity.ok(experienceService.createEntry(request, email));
     }
@@ -44,7 +46,7 @@ public class ExperienceController {
     @PutMapping("/{id}")
     public ResponseEntity<ExperienceResponse> updateEntry(
             @PathVariable UUID id,
-            @RequestBody ExperienceRequest request,
+            @Valid @RequestBody ExperienceRequest request,
             @AuthenticationPrincipal String email) {
         return ResponseEntity.ok(experienceService.updateEntry(id, request, email));
     }
@@ -66,5 +68,11 @@ public class ExperienceController {
     @GetMapping("/stats/summary")
     public ResponseEntity<SystemStatsResponse> getSystemMetrics(@AuthenticationPrincipal String email) {
         return ResponseEntity.ok(experienceService.getSystemMetrics(email));
+    }
+
+    // Returns all unencrypted historical entries for the migration pass
+    @GetMapping("/legacy")
+    public ResponseEntity<List<ExperienceResponse>> getLegacyEntries(@AuthenticationPrincipal String email) {
+        return ResponseEntity.ok(experienceService.getLegacyEntries(email));
     }
 }

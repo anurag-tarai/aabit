@@ -29,6 +29,9 @@ public class ExperienceEntry {
     @Column(nullable = false)
     private boolean sensitive = false;
 
+    @Column(name = "client_encrypted", nullable = false)
+    private boolean clientEncrypted = false;
+
     @Column(nullable = false)
     private boolean deleted = false;
 

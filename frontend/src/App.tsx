@@ -4,6 +4,7 @@ import { MainLayout } from './components/common/MainLayout';
 import { ExperienceDashboard } from './components/experience/ExperienceDashboard';
 import { AuthPage } from './components/auth/AuthPage';
 import { SprintDashboard } from './components/sprints/SprintDashboard';
+import { SettingsDashboard } from './components/common/SettingsDashboard';
 
 // Complete Stateless Route Boundary Protection Guard 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -36,8 +37,9 @@ function App() {
           {/* Future Plug-and-Play slots mount modularly right under this exact wrapper layout: */}
           {/* <Route path="habits" element={<HabitDashboard />} /> */}
           {/* <Route path="sprints" element={<SprintDashboard />} /> */}
-          <Route path="habits" element={<div className="font-mono text-xs text-neutral-500 p-4 border border-dashed border-neutral-800 rounded">SYSTEM_NODE: HABIT_LOG_ENGINE // COMING_SOON</div>} />
           <Route path="sprints" element={<SprintDashboard />} />
+        
+        <Route path="settings" element={<SettingsDashboard />} />
         </Route>
 
         {/* Catch-All Standard Fallback Safety Re-router */}

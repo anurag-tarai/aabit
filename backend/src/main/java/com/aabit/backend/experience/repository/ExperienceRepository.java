@@ -53,4 +53,8 @@ public interface ExperienceRepository extends JpaRepository<ExperienceEntry, UUI
             "AND EXTRACT(MONTH FROM e.timestamp) = :month " +
             "AND e.deleted = false")
     long countMonthlyEntriesByUser(@Param("userId") UUID userId, @Param("year") int year, @Param("month") int month);
+
+    // Fetches all unencrypted entries for the migration pass
+    @Query("SELECT e FROM ExperienceEntry e WHERE e.user.id = :userId AND e.clientEncrypted = false AND e.deleted = false")
+    List<ExperienceEntry> findLegacyEntries(@Param("userId") UUID userId);
 }

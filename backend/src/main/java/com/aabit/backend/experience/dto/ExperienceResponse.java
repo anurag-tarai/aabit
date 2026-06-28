@@ -9,5 +9,6 @@ public record ExperienceResponse(
         Instant timestamp,
         String markdownContent,
         boolean sensitive,
+        boolean clientEncrypted,
         List<String> tags
 ) {}

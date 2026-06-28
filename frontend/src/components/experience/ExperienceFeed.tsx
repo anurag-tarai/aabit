@@ -3,7 +3,17 @@ import ReactMarkdown from "react-markdown";
 import { MarkdownToolbar } from "../common/MarkdownToolbar";
 import { api } from "../../api/client";
 import type { ExperienceResponse, Tag } from "../../api/client";
-import { Trash2, Lock, Edit2, Check, X, Hash, MapPin, Loader2 } from "lucide-react";
+import {
+  Trash2,
+  Lock,
+  Edit2,
+  Check,
+  X,
+  Hash,
+  MapPin,
+  Loader2,
+} from "lucide-react";
+import { encryptContent, decryptContent, vault } from "../../utils/vaultCrypto";
 
 interface ExperienceFeedProps {
   feed: ExperienceResponse[];
@@ -30,11 +40,39 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
   const [editLocation, setEditLocation] = useState<string>("");
   const [fetchingLocation, setFetchingLocation] = useState(false);
 
+  // Decrypted plaintext cache: entry id → plaintext string
+  const [decryptedMap, setDecryptedMap] = useState<Record<string, string>>({});
+
+  // Decrypt all entries whenever the feed changes
   useEffect(() => {
-    const closeDropdowns = () => setShowEditDropdown(false);
-    window.addEventListener("click", closeDropdowns);
-    return () => window.removeEventListener("click", closeDropdowns);
-  }, []);
+    const masterKey = vault.getKey();
+    if (!masterKey) return;
+
+    const run = async () => {
+      const result: Record<string, string> = {};
+      await Promise.all(
+        feed.map(async (entry) => {
+          if (!entry.clientEncrypted) {
+            // Legacy plaintext entry — display as-is (shouldn't happen after migration)
+            result[entry.id] = entry.markdownContent;
+            return;
+          }
+          try {
+            result[entry.id] = await decryptContent(
+              entry.markdownContent,
+              masterKey,
+            );
+          } catch {
+            result[entry.id] =
+              "[Decryption failed — data may be from a different vault]";
+          }
+        }),
+      );
+      setDecryptedMap(result);
+    };
+
+    run();
+  }, [feed]);
 
   const filteredEditTags = allTags.filter((t) => {
     const input = editTagInput.trim().toLowerCase();
@@ -57,32 +95,40 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
 
   const handleEditStart = (entry: ExperienceResponse) => {
     setEditingId(entry.id);
-    setEditContent(entry.markdownContent);
+    setEditContent(decryptedMap[entry.id] ?? ""); // use decrypted plaintext
     setEditIsSensitive(entry.sensitive);
     setEditSelectedTags([...entry.tags]);
     setEditTagInput("");
     setEditLocation("");
   };
 
-  // UPDATED: Now identifies and replaces code blocks wrapping location segments
   const handleEditSave = async (entry: ExperienceResponse) => {
+    const masterKey = vault.getKey();
+    if (!masterKey) {
+      alert("Vault is locked. Please refresh and unlock your vault.");
+      return;
+    }
+
     try {
       let finalContent = editContent;
-
       if (editLocation) {
-        // Look for an existing plain text location block wrapped in code syntax to update
-        if (finalContent.includes("\n\n\`\`\`\n📍")) {
-          const splitArray = finalContent.split("\n\n\`\`\`\n📍");
-          splitArray.pop(); // Clear out the old block segment safely
-          finalContent = splitArray.join("\n\n\`\`\`\n📍") + `\n\n\`\`\`\n📍 ${editLocation}\n\`\`\``;
+        if (finalContent.includes("\n\n```\n📍")) {
+          const parts = finalContent.split("\n\n```\n📍");
+          parts.pop();
+          finalContent =
+            parts.join("\n\n```\n📍") +
+            `\n\n\`\`\`\n📍 ${editLocation}\n\`\`\``;
         } else {
           finalContent += `\n\n\`\`\`\n📍 ${editLocation}\n\`\`\``;
         }
       }
 
+      const encryptedContent = await encryptContent(finalContent, masterKey);
+
       await api.put(`/experiences/${entry.id}`, {
-        markdownContent: finalContent,
+        markdownContent: encryptedContent,
         sensitive: editIsSensitive,
+        clientEncrypted: true,
         tags: editSelectedTags,
       });
       setEditingId(null);
@@ -105,15 +151,19 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
         const { latitude, longitude } = position.coords;
         try {
           const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
           );
           const data = await response.json();
           if (data && data.address) {
             const addr = data.address;
-            const area = addr.suburb || addr.residential || addr.neighbourhood || "";
-            const regionalDistrict = addr.city_district || addr.city || addr.town || "";
-            
-            const cleanAddress = [area, regionalDistrict].filter(Boolean).join(', ');
+            const area =
+              addr.suburb || addr.residential || addr.neighbourhood || "";
+            const regionalDistrict =
+              addr.city_district || addr.city || addr.town || "";
+
+            const cleanAddress = [area, regionalDistrict]
+              .filter(Boolean)
+              .join(", ");
             setEditLocation(cleanAddress);
           } else {
             setEditLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
@@ -128,8 +178,8 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
       (error) => {
         alert(`Failed to get location: ${error.message}`);
         setFetchingLocation(false);
-      },  
-      { enableHighAccuracy: true, timeout: 30000, maximumAge: 300000 }
+      },
+      { enableHighAccuracy: true, timeout: 30000, maximumAge: 300000 },
     );
   };
 
@@ -236,7 +286,9 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
                   value={editContent}
                   onChange={(e) => setEditContent(e.target.value)}
                   className={`w-full h-32 p-3 bg-os-bg border border-os-border rounded-lg text-white outline-none resize-none font-mono text-sm focus:border-gray-500 transition-all ${
-                    editIsSensitive ? 'blur-[3px] focus:blur-none hover:blur-none' : ''
+                    editIsSensitive
+                      ? "blur-[3px] focus:blur-none hover:blur-none"
+                      : ""
                   }`}
                 />
 
@@ -286,15 +338,27 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
                       ))}
 
                       {!filteredEditTags.find(
-                        (t) => t.name.toLowerCase() === editTagInput.toLowerCase().trim()
+                        (t) =>
+                          t.name.toLowerCase() ===
+                          editTagInput.toLowerCase().trim(),
                       ) &&
-                        !editSelectedTags.includes(editTagInput.toLowerCase().trim()) && (
+                        !editSelectedTags.includes(
+                          editTagInput.toLowerCase().trim(),
+                        ) && (
                           <button
                             type="button"
                             onClick={() => {
-                              const cleanName = editTagInput.trim().toLowerCase();
-                              if (cleanName && !editSelectedTags.includes(cleanName)) {
-                                setEditSelectedTags([...editSelectedTags, cleanName]);
+                              const cleanName = editTagInput
+                                .trim()
+                                .toLowerCase();
+                              if (
+                                cleanName &&
+                                !editSelectedTags.includes(cleanName)
+                              ) {
+                                setEditSelectedTags([
+                                  ...editSelectedTags,
+                                  cleanName,
+                                ]);
                               }
                               setEditTagInput("");
                               setShowEditDropdown(false);
@@ -314,7 +378,11 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
                     {editSelectedTags.map((tag) => (
                       <span
                         key={tag}
-                        onClick={() => setEditSelectedTags(editSelectedTags.filter((t) => t !== tag))}
+                        onClick={() =>
+                          setEditSelectedTags(
+                            editSelectedTags.filter((t) => t !== tag),
+                          )
+                        }
                         className="px-2 py-0.5 text-[11px] bg-os-bg border border-os-border text-gray-300 rounded cursor-pointer hover:bg-red-950/40 hover:text-red-400 hover:border-red-900/50 transition-all flex items-center gap-1"
                       >
                         #{tag}
@@ -331,11 +399,13 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
                       type="button"
                       onClick={() => setEditIsSensitive(!editIsSensitive)}
                       className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
-                        editIsSensitive ? 'bg-red-900/20 text-red-400' : 'text-os-muted hover:bg-os-bg hover:text-os-text'
+                        editIsSensitive
+                          ? "bg-red-900/20 text-red-400"
+                          : "text-os-muted hover:bg-os-bg hover:text-os-text"
                       }`}
                     >
                       <Lock size={14} />
-                      {editIsSensitive ? 'Sensitive' : 'Not Sensitive'}
+                      {editIsSensitive ? "Sensitive" : "Not Sensitive"}
                     </button>
 
                     <button
@@ -347,7 +417,10 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
                       {fetchingLocation ? (
                         <Loader2 size={13} className="animate-spin" />
                       ) : (
-                        <MapPin size={13} className={editLocation ? "text-blue-400" : ""} />
+                        <MapPin
+                          size={13}
+                          className={editLocation ? "text-blue-400" : ""}
+                        />
                       )}
                       {editLocation ? "Update Location" : "Attach Location"}
                     </button>
@@ -355,7 +428,10 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
 
                   <div className="flex gap-2">
                     <button
-                      onClick={() => { setEditingId(null); setEditLocation(""); }}
+                      onClick={() => {
+                        setEditingId(null);
+                        setEditLocation("");
+                      }}
                       className="flex items-center gap-1 text-xs text-os-muted hover:text-white px-2 py-1 cursor-pointer"
                     >
                       <X size={14} /> Cancel
@@ -386,7 +462,9 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
                   )}
 
                   <div className="prose prose-invert prose-sm max-w-none prose-headings:text-white prose-p:text-gray-300 prose-code:text-pink-400 font-sans">
-                    <ReactMarkdown>{entry.markdownContent}</ReactMarkdown>
+                    <ReactMarkdown>
+                      {decryptedMap[entry.id] ?? "Decrypting..."}
+                    </ReactMarkdown>
                   </div>
                 </div>
 

@@ -18,6 +18,7 @@ public class ExperienceMapper {
         ExperienceEntry entry = new ExperienceEntry();
         entry.setMarkdownContent(request.markdownContent());
         entry.setSensitive(request.sensitive());
+        entry.setClientEncrypted(request.clientEncrypted());
         entry.setTimestamp(Instant.now()); // Set timestamp on creation
 
         // Note: The Service layer will handle the actual Tag entity mapping
@@ -35,6 +36,7 @@ public class ExperienceMapper {
                 entry.getTimestamp(),
                 entry.getMarkdownContent(),
                 entry.isSensitive(),
+                entry.isClientEncrypted(),
                 tagNames
         );
     }

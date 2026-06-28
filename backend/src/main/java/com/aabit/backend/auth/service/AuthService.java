@@ -53,12 +53,12 @@ public class AuthService {
                 .findTopByEmailOrderByExpiryTimeDesc(email)
                 .orElse(null);
 
-        if (lastSession != null &&
-                lastSession.getExpiryTime().isAfter(Instant.now().minus(Duration.ofMinutes(5)))) {
-
-            log.warn("[OTP_RATE_LIMIT] email={} too many requests", email);
-            throw new IllegalStateException("Wait 5 minute before requesting another OTP: " + email);
-        }
+//        if (lastSession != null &&
+//                lastSession.getExpiryTime().isAfter(Instant.now().minus(Duration.ofMinutes(1)))) {
+//
+//            log.warn("[OTP_RATE_LIMIT] email={} too many requests", email);
+//            throw new IllegalStateException("Wait 5 minute before requesting another OTP: " + email);
+//        }
 
         int deleted = otpSessionRepository.deleteByEmail(email);
         log.info("[OTP_CLEANUP] email={}, deleted={}", email, deleted);

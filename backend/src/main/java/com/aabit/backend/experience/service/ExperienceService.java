@@ -32,29 +32,16 @@ public class ExperienceService {
 
     @Transactional
     public ExperienceResponse createEntry(ExperienceRequest request, String email) {
-        User currentUser = resolveUser(email);
-        ExperienceEntry entry = mapper.toEntity(request);
-        entry.setUser(currentUser); // Secure tenancy binding
 
-        Set<Tag> managedTags = new HashSet<>();
-        if (request.tags() != null && !request.tags().isEmpty()) {
-            for (String rawTag : request.tags()) {
-                String cleanName = rawTag.trim().toLowerCase();
-                Tag tag = tagRepository.findByNameAndUserId(cleanName, currentUser.getId())
-                        .orElseGet(() -> {
-                            Tag newTag = new Tag();
-                            newTag.setName(cleanName);
-                            newTag.setCreatedAt(Instant.now());
-                            newTag.setUser(currentUser);
-                            return tagRepository.save(newTag);
-                        });
-                managedTags.add(tag);
-            }
+        if (request.markdownContent() == null || request.markdownContent().isBlank()) {
+            throw new IllegalArgumentException("Entry content cannot be blank.");
         }
 
-        entry.setTags(managedTags);
-        ExperienceEntry savedEntry = experienceRepository.save(entry);
-        return mapper.toResponseDto(savedEntry);
+        User currentUser = resolveUser(email);
+        ExperienceEntry entry = mapper.toEntity(request);
+        entry.setUser(currentUser);
+        entry.setTags(resolveTags(request.tags(), currentUser));
+        return mapper.toResponseDto(experienceRepository.save(entry));
     }
 
     @Transactional(readOnly = true)
@@ -71,33 +58,19 @@ public class ExperienceService {
         ExperienceEntry entry = experienceRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Experience Entry not found"));
 
-        // Multitenancy Guard: Verify ownership before executing mutations
+        if (request.markdownContent() == null || request.markdownContent().isBlank()) {
+            throw new IllegalArgumentException("Entry content cannot be blank.");
+        }
+
         if (!entry.getUser().getId().equals(currentUser.getId())) {
             throw new IllegalStateException("SECURITY_VIOLATION: Unauthorised update instruction rejected.");
         }
 
         entry.setMarkdownContent(request.markdownContent());
         entry.setSensitive(request.sensitive());
-
-        Set<Tag> managedTags = new HashSet<>();
-        if (request.tags() != null && !request.tags().isEmpty()) {
-            for (String rawTag : request.tags()) {
-                String cleanName = rawTag.trim().toLowerCase();
-                Tag tag = tagRepository.findByNameAndUserId(cleanName, currentUser.getId())
-                        .orElseGet(() -> {
-                            Tag newTag = new Tag();
-                            newTag.setName(cleanName);
-                            newTag.setCreatedAt(Instant.now());
-                            newTag.setUser(currentUser);
-                            return tagRepository.save(newTag);
-                        });
-                managedTags.add(tag);
-            }
-        }
-
-        entry.setTags(managedTags);
-        ExperienceEntry updatedEntry = experienceRepository.save(entry);
-        return mapper.toResponseDto(updatedEntry);
+        entry.setClientEncrypted(request.clientEncrypted()); // honour whatever the client sends
+        entry.setTags(resolveTags(request.tags(), currentUser));
+        return mapper.toResponseDto(experienceRepository.save(entry));
     }
 
     @Transactional
@@ -119,11 +92,8 @@ public class ExperienceService {
         User currentUser = resolveUser(email);
         List<Object[]> rows = experienceRepository.getMonthlyLogCounts(currentUser.getId(), year, month);
         Map<Integer, Integer> countsMap = new HashMap<>();
-
         for (Object[] row : rows) {
-            int day = ((Number) row[0]).intValue();
-            int count = ((Number) row[1]).intValue();
-            countsMap.put(day, count);
+            countsMap.put(((Number) row[0]).intValue(), ((Number) row[1]).intValue());
         }
         return countsMap;
     }
@@ -132,10 +102,8 @@ public class ExperienceService {
     public SystemStatsResponse getSystemMetrics(String email) {
         User currentUser = resolveUser(email);
         ZonedDateTime now = ZonedDateTime.now(ZoneId.of("Asia/Kolkata"));
-
         long lifetime = experienceRepository.countActiveEntriesByUser(currentUser.getId());
         long monthly = experienceRepository.countMonthlyEntriesByUser(currentUser.getId(), now.getYear(), now.getMonthValue());
-
         return new SystemStatsResponse(lifetime, monthly);
     }
 
@@ -147,13 +115,46 @@ public class ExperienceService {
 
     @Transactional
     public Tag renameUserTag(UUID id, String newName, String email) {
-        // Tag structural renames are global, but check user context first for safety
-        resolveUser(email);
+        User currentUser = resolveUser(email);
         Tag tag = tagRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Tag not found"));
 
+        if (!tag.getUser().getId().equals(currentUser.getId())) {
+            throw new IllegalStateException("SECURITY_VIOLATION: Unauthorised tag mutation rejected.");
+        }
+
         tag.setName(newName.trim().toLowerCase());
         return tagRepository.save(tag);
+    }
+
+    // Returns all unencrypted entries so the frontend migration pass can encrypt them
+    @Transactional(readOnly = true)
+    public List<ExperienceResponse> getLegacyEntries(String email) {
+        User currentUser = resolveUser(email);
+        return experienceRepository.findLegacyEntries(currentUser.getId())
+                .stream()
+                .map(mapper::toResponseDto)
+                .toList();
+    }
+
+    // ── Private helpers ────────────────────────────────────────────────────────
+
+    private Set<Tag> resolveTags(List<String> rawTags, User owner) {
+        Set<Tag> managed = new HashSet<>();
+        if (rawTags == null || rawTags.isEmpty()) return managed;
+        for (String rawTag : rawTags) {
+            String clean = rawTag.trim().toLowerCase();
+            Tag tag = tagRepository.findByNameAndUserId(clean, owner.getId())
+                    .orElseGet(() -> {
+                        Tag t = new Tag();
+                        t.setName(clean);
+                        t.setCreatedAt(Instant.now());
+                        t.setUser(owner);
+                        return tagRepository.save(t);
+                    });
+            managed.add(tag);
+        }
+        return managed;
     }
 
     private User resolveUser(String email) {

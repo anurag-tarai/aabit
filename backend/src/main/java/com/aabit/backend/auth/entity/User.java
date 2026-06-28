@@ -17,4 +17,10 @@ public class User {
 
     @Column(nullable = false)
     private String name;
+
+    @Column(name = "vault_pin_wrapped", columnDefinition = "TEXT")
+    private String vaultPinWrapped;
+
+    @Column(name = "vault_phrase_wrapped", columnDefinition = "TEXT")
+    private String vaultPhraseWrapped;
 }
