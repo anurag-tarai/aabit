@@ -200,7 +200,8 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
         return (
           <div
             key={entry.id}
-            className="group relative bg-neutral-950 border border-neutral-800 rounded-xl px-6 py-5 hover:border-neutral-700 transition-colors shadow-sm"
+            tabIndex={0}
+            className="group relative bg-neutral-950 border border-neutral-800 rounded-xl px-6 py-5 hover:border-neutral-700 focus:border-neutral-700 transition-colors shadow-sm outline-none"
           >
             {/* Timestamp + actions row */}
             <div className="flex flex-row items-center justify-between gap-3 mb-4">
@@ -208,7 +209,7 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
                 <span className="text-sm font-semibold text-neutral-300">{dt.label}</span>
                 <span className="text-xs text-neutral-600">{dt.time}</span>
               </div>
-              <div className="flex gap-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+              <div className="flex gap-2 opacity-0 group-hover:opacity-100 group-focus:opacity-100 group-focus-within:opacity-100 transition-opacity">
                 <button onClick={() => handleEditStart(entry)} className="text-neutral-600 hover:text-neutral-300 transition-colors p-1 rounded hover:bg-neutral-800">
                   <Edit2 size={13} />
                 </button>
