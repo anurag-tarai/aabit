@@ -68,7 +68,7 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
     switch (priority) {
       case 'HIGHEST': return 'text-red-400 border-red-950/60 bg-red-950/20';
       case 'LOW': return 'text-blue-400 border-blue-950/60 bg-blue-950/20';
-      default: return 'text-amber-400 border-amber-955/50 bg-amber-955/20';
+      default: return 'text-amber-400 border-amber-900/60 bg-amber-900/20';
     }
   };
 
