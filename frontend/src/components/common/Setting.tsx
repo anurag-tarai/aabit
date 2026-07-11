@@ -26,7 +26,6 @@ const Row: React.FC<{ label: string; right: React.ReactNode }> = ({ label, right
   <div className="flex items-center justify-between gap-4">
     <div className="flex flex-col gap-0.5">
       <span className="text-sm text-neutral-300 font-medium">{label}</span>
-      <span className="text-sm text-neutral-300 font-medium">{label}</span>
     </div>
     <div className="flex-shrink-0">{right}</div>
   </div>
