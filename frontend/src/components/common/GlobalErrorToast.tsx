@@ -22,7 +22,7 @@ export const GlobalErrorToast = () => {
   if (!error) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+    <div className="fixed top-4 right-4 z-[9999] animate-in slide-in-from-top-5 fade-in duration-300">
       <div className="bg-red-950/90 border border-red-900 text-red-200 px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 max-w-sm">
         <div className="flex-1 text-sm font-medium">{error}</div>
         <button 
