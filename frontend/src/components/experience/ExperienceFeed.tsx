@@ -1,4 +1,5 @@
 import { CustomInput } from '../common/CustomInput';
+import { handleAutoBullet } from '../../utils/markdownUtils';
 import React, { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { MarkdownToolbar } from "../common/MarkdownToolbar";
@@ -231,6 +232,7 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
                   id={`edit-textarea-${entry.id}`}
                   value={editContent}
                   onChange={e => setEditContent(e.target.value)}
+                  onKeyDown={e => handleAutoBullet(e, editContent, setEditContent)}
                   className={`w-full h-[50vh] md:h-40 min-h-[160px] p-4 bg-neutral-900 border border-neutral-700 rounded-lg text-neutral-200 outline-none resize-y text-sm leading-relaxed focus:border-neutral-500 transition-colors ${editIsSensitive ? 'blur-[3px] focus:blur-none hover:blur-none' : ''}`}
                 />
                 {editLocation && (
