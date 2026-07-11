@@ -447,7 +447,7 @@ export const SprintDashboard: React.FC = () => {
               </button>
               
               {showSprintList && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-[#0a0a0a] border border-neutral-800 rounded shadow-2xl z-20 flex flex-col overflow-hidden font-mono">
+                <div className="absolute right-0 top-full mt-2 w-64 bg-[#0a0a0a] border border-neutral-800 rounded shadow-2xl z-20 flex flex-col overflow-hidden font-mono animate-in fade-in slide-in-from-top-1 duration-150">
                   {sprints.map(s => (
                     <div key={s.id} className="group flex items-center justify-between border-b border-neutral-800/50">
                       <button onClick={() => handleSprintSwitch(s)} className={`flex-1 text-left px-3 py-2 text-xs hover:bg-neutral-900 transition-colors ${s.id === activeSprint.id ? 'text-emerald-400' : 'text-neutral-400'}`}>
