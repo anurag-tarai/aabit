@@ -77,8 +77,16 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
     setError(null);
     setLoading(true);
     try {
-      const start = new Date(`${preselectedDate}T${startTime}:00`).toISOString();
-      const end = new Date(`${preselectedDate}T${endTime}:00`).toISOString();
+      const startDate = new Date(`${preselectedDate}T${startTime}:00`);
+      const endDate = new Date(`${preselectedDate}T${endTime}:00`);
+      
+      // If end time is before start time, it means it crossed midnight to the next day
+      if (endDate < startDate) {
+        endDate.setDate(endDate.getDate() + 1);
+      }
+
+      const start = startDate.toISOString();
+      const end = endDate.toISOString();
 
       if (isEditing && editingLog) {
         // ★ EDIT mode — PATCH existing log
@@ -118,11 +126,18 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
   };
 
   const durationPreview = (() => {
-    if (!startTime || !endTime || endTime <= startTime) return null;
+    if (!startTime || !endTime) return null;
     const [sh, sm] = startTime.split(':').map(Number);
     const [eh, em] = endTime.split(':').map(Number);
-    const total = (eh * 60 + em) - (sh * 60 + sm);
-    if (total <= 0) return null;
+    let total = (eh * 60 + em) - (sh * 60 + sm);
+    
+    // Handle crossing midnight
+    if (total < 0) {
+      total += 24 * 60;
+    }
+    
+    if (total === 0) return null; // Can't log 0 minutes
+    
     const h = Math.floor(total / 60);
     const m = total % 60;
     return h > 0 ? `${h}h ${m > 0 ? m + 'm' : ''}`.trim() : `${m}m`;
