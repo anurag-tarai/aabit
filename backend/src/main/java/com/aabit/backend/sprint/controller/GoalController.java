@@ -48,6 +48,14 @@ public class GoalController {
         return new ResponseEntity<>(sprintService.addWorkArea(goalId, request), HttpStatus.CREATED);
     }
 
+    @PatchMapping("/{goalId}/work-areas/{workAreaId}")
+    public ResponseEntity<WorkAreaResponse> updateWorkArea(
+            @PathVariable UUID goalId,
+            @PathVariable UUID workAreaId,
+            @Valid @RequestBody WorkAreaRequest request) {
+        return ResponseEntity.ok(sprintService.updateWorkArea(goalId, workAreaId, request));
+    }
+
     @GetMapping("/{goalId}/work-areas")
     public ResponseEntity<List<WorkAreaResponse>> getWorkAreas(@PathVariable UUID goalId) {
         return ResponseEntity.ok(sprintService.getWorkAreas(goalId));

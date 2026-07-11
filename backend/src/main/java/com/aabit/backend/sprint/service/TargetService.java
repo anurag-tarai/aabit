@@ -29,8 +29,6 @@ public class TargetService {
 
     /**
      * Returns all targets for the given Monday.
-     * Lazy-clones any repeating targets from the previous week that
-     * haven't been cloned yet.
      *
      * @param weekStartDate must be a Monday
      */
@@ -38,37 +36,6 @@ public class TargetService {
     public List<TargetResponse> getTargetsForWeek(LocalDate weekStartDate) {
         assertMonday(weekStartDate);
         UUID userId = securityUtils.getCurrentUserId();
-
-        // Lazy-clone repeating targets from the previous week
-        LocalDate prevWeekStart = weekStartDate.minusWeeks(1);
-        List<Target> repeating = targetRepository.findRepeatingFromPreviousWeek(userId, prevWeekStart);
-
-        List<Target> clones = new ArrayList<>();
-        for (Target parent : repeating) {
-            boolean alreadyCloned = targetRepository
-                    .existsByUserIdAndWorkAreaIdAndNameAndWeekStartDate(
-                            userId,
-                            parent.getWorkAreaId(),
-                            parent.getName(),
-                            weekStartDate
-                    );
-            if (!alreadyCloned) {
-                Target clone = new Target(
-                        null,
-                        userId,
-                        parent.getWorkAreaId(),
-                        parent.getName(),
-                        weekStartDate,
-                        false,          // is_completed resets
-                        parent.isRepeating(),
-                        Instant.now()
-                );
-                clones.add(clone);
-            }
-        }
-        if (!clones.isEmpty()) {
-            targetRepository.saveAll(clones);
-        }
 
         return targetRepository
                 .findByUserIdAndWeekStartDateOrderByCreatedAtAsc(userId, weekStartDate)
@@ -83,21 +50,41 @@ public class TargetService {
     public TargetResponse createTarget(TargetRequest req) {
         UUID userId = securityUtils.getCurrentUserId();
 
-        LocalDate weekStart = resolveMonday(req.weekStartDate());
+        LocalDate targetDate = req.targetDate();
+        String targetType = req.targetType() != null ? req.targetType() : "WEEKLY";
+        boolean isFixed = req.isFixed() != null ? req.isFixed() : false;
+        String priority = req.priority() != null ? req.priority() : "MEDIUM";
 
-        // Verify work area exists (ownership check via goal -> user chain is
-        // handled implicitly; work_area FK guarantees it belongs to someone)
-        workAreaRepository.findById(req.workAreaId())
-                .orElseThrow(() -> new IllegalArgumentException("Work area not found."));
+        LocalDate weekStart;
+        if ("DAILY".equals(targetType) && targetDate != null) {
+            weekStart = targetDate.with(java.time.DayOfWeek.MONDAY);
+        } else if (targetDate != null) {
+            weekStart = targetDate.with(java.time.DayOfWeek.MONDAY);
+        } else {
+            weekStart = resolveMonday(req.weekStartDate());
+        }
+
+        // Verify work area if present
+        if (req.workAreaId() != null) {
+            var wa = workAreaRepository.findById(req.workAreaId())
+                    .orElseThrow(() -> new IllegalArgumentException("Work area not found."));
+            if (req.goalId() != null && !wa.getGoalId().equals(req.goalId())) {
+                throw new IllegalArgumentException("Work area does not belong to the selected goal.");
+            }
+        }
 
         Target target = new Target(
                 null,
                 userId,
                 req.workAreaId(),
+                req.goalId(),
+                targetType,
+                targetDate,
+                isFixed,
+                priority,
                 req.name(),
                 weekStart,
                 false,
-                req.repeating(),
                 Instant.now()
         );
         return TargetResponse.from(targetRepository.save(target));
@@ -108,13 +95,6 @@ public class TargetService {
         UUID userId = securityUtils.getCurrentUserId();
         Target target = getOwned(targetId, userId);
 
-        // Guard: past-Sunday lock — the frontend enforces this too,
-        // but we enforce it on the server as the source of truth.
-        LocalDate sunday = target.getWeekStartDate().plusDays(6);
-        if (LocalDate.now().isAfter(sunday)) {
-            throw new IllegalStateException(
-                    "Cannot modify a target from a past week.");
-        }
 
         target.setCompleted(!target.isCompleted());
         return TargetResponse.from(targetRepository.save(target));
@@ -125,29 +105,54 @@ public class TargetService {
         UUID userId = securityUtils.getCurrentUserId();
         Target target = getOwned(targetId, userId);
 
-        LocalDate sunday = target.getWeekStartDate().plusDays(6);
-        if (LocalDate.now().isAfter(sunday)) {
-            throw new IllegalStateException(
-                    "Cannot modify a target from a past week.");
+        if (req.goalId() != null) {
+            target.setGoalId(req.goalId());
+        } else if (req.goalId() == null && req.workAreaId() == null) {
+            target.setGoalId(null);
         }
 
         if (req.workAreaId() != null) {
-            workAreaRepository.findById(req.workAreaId())
+            var wa = workAreaRepository.findById(req.workAreaId())
                     .orElseThrow(() -> new IllegalArgumentException("Work area not found."));
             target.setWorkAreaId(req.workAreaId());
+            target.setGoalId(wa.getGoalId());
+        } else if (req.workAreaId() == null && req.goalId() == null) {
+            target.setWorkAreaId(null);
         }
+
         if (req.name() != null && !req.name().isBlank()) {
             target.setName(req.name());
         }
-        target.setRepeating(req.repeating());
 
-        return TargetResponse.from(targetRepository.save(target));
+        if (req.targetType() != null) {
+            target.setTargetType(req.targetType());
+        }
+        if (req.targetDate() != null) {
+            target.setTargetDate(req.targetDate());
+            target.setWeekStartDate(req.targetDate().with(java.time.DayOfWeek.MONDAY));
+        } else if (req.targetDate() == null && "WEEKLY".equals(req.targetType())) {
+            target.setTargetDate(null);
+            if (req.weekStartDate() != null) {
+                target.setWeekStartDate(req.weekStartDate());
+            }
+        }
+        if (req.isFixed() != null) {
+            target.setFixed(req.isFixed());
+        }
+        if (req.priority() != null) {
+            target.setPriority(req.priority());
+        }
+
+        Target savedTarget = targetRepository.save(target);
+
+        return TargetResponse.from(savedTarget);
     }
 
     @Transactional
     public void deleteTarget(UUID targetId) {
         UUID userId = securityUtils.getCurrentUserId();
         Target target = getOwned(targetId, userId);
+
         targetRepository.delete(target);
     }
 

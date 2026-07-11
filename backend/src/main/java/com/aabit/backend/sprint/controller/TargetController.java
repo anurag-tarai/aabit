@@ -5,6 +5,7 @@ import com.aabit.backend.sprint.dto.TargetResponse;
 import com.aabit.backend.sprint.service.TargetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/targets")
 @RequiredArgsConstructor
+@Slf4j
 public class TargetController {
 
     private final TargetService targetService;
@@ -24,7 +26,7 @@ public class TargetController {
     /**
      * GET /api/v1/targets?weekStart=2025-06-23
      * weekStart MUST be a Monday (ISO 8601 date).
-     * Triggers lazy-clone of repeating targets from the previous week.
+     * Fetch targets for the week.
      */
     @GetMapping
     public ResponseEntity<List<TargetResponse>> getTargetsForWeek(
@@ -47,11 +49,12 @@ public class TargetController {
         return ResponseEntity.ok(targetService.toggleComplete(targetId));
     }
 
-    /** PATCH /api/v1/targets/{targetId} — update name / workArea / repeating */
+    /** PATCH /api/v1/targets/{targetId} — update name / workArea */
     @PatchMapping("/{targetId}")
     public ResponseEntity<TargetResponse> updateTarget(
             @PathVariable UUID targetId,
             @Valid @RequestBody TargetRequest request) {
+        log.info("Updating target {} with request payload: {}", targetId, request);
         return ResponseEntity.ok(targetService.updateTarget(targetId, request));
     }
 

@@ -12,13 +12,13 @@ import java.util.UUID;
 @Repository
 public interface GoalRepository extends JpaRepository<Goal, UUID> {
 
-    List<Goal> findByUserIdOrderByName(UUID userId);
+    List<Goal> findByUserIdOrderByTargetTimePercentageDescNameAsc(UUID userId);
 
     @Query("""
         SELECT g FROM Goal g
         JOIN SprintGoal sg ON sg.goalId = g.id
         WHERE sg.sprintId = :sprintId AND g.userId = :userId
-        ORDER BY sg.priority ASC, g.name ASC
+        ORDER BY g.targetTimePercentage DESC, g.name ASC
     """)
     List<Goal> findGoalsBySprintId(
             @Param("sprintId") UUID sprintId,

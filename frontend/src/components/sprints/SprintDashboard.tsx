@@ -6,7 +6,7 @@ import { GoalArchitect } from './GoalArchitect';
 import { InitializeSprintModal } from './InitializeSprintModal';
 import { DayDetailPanel } from './DayDetailPanel';
 import { TargetModal } from './TargetModal';
-import { getCurrentWeekMonday } from '../../api/sprintClient';
+import { getMondayFromDate } from '../../api/sprintClient';
 import {
   Activity, AlertTriangle, ChevronLeft, ChevronRight,
   List, Plus, Pencil, Trash2, CheckCircle, X,
@@ -191,12 +191,13 @@ export const SprintDashboard: React.FC = () => {
   const loadTargets = useCallback(async () => {
     setTargetsLoading(true);
     try {
-      const res = await sprintApi.getTargetsForWeek(getCurrentWeekMonday());
+      const monday = getMondayFromDate(selectedDay);
+      const res = await sprintApi.getTargetsForWeek(monday);
       setTargets(res.data);
     } finally {
       setTargetsLoading(false);
     }
-  }, []);
+  }, [selectedDay]);
 
   useEffect(() => {
     if (activeSprint) {

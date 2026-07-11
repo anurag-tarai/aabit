@@ -8,8 +8,17 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 public record TargetRequest(
-        @NotNull(message = "workAreaId is required")
         UUID workAreaId,
+
+        UUID goalId,
+
+        String targetType,
+
+        LocalDate targetDate,
+
+        Boolean isFixed,
+
+        String priority,
 
         @NotBlank(message = "name is required")
         @Size(max = 255)
@@ -19,7 +28,5 @@ public record TargetRequest(
          * The Monday that starts the target's week.
          * If null, defaults to the current week's Monday in the service.
          */
-        LocalDate weekStartDate,
-
-        boolean repeating
+        LocalDate weekStartDate
 ) {}

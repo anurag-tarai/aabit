@@ -74,7 +74,7 @@ public interface TimeLogRepository extends JpaRepository<TimeLog, UUID> {
      */
     @Query(value = """
     SELECT COUNT(*) > 0
-    FROM time_logs
+    FROM time_log
     WHERE user_id = :userId
       AND id != :excludeId
       AND start_time < :endTime
@@ -85,5 +85,21 @@ public interface TimeLogRepository extends JpaRepository<TimeLog, UUID> {
             @Param("startTime") Instant startTime,
             @Param("endTime")   Instant endTime,
             @Param("excludeId") UUID excludeId
+    );
+
+    @Query(value = """
+    SELECT
+        goal_id,
+        CAST(SUM(duration_minutes) AS INTEGER) AS total_minutes,
+        anonymous_name AS anonymous_label
+    FROM time_log
+    WHERE user_id  = :userId
+      AND sprint_id = :sprintId
+    GROUP BY 1, 3
+    ORDER BY 1 NULLS LAST
+    """, nativeQuery = true)
+    List<Object[]> getLifetimeSummaryRaw(
+            @Param("userId")   UUID userId,
+            @Param("sprintId") UUID sprintId
     );
 }

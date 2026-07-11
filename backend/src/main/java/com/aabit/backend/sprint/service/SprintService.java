@@ -95,14 +95,15 @@ public class SprintService {
     public GoalResponse createGoal(GoalRequest req) {
         UUID userId = securityUtils.getCurrentUserId();
         String color = (req.color() != null && !req.color().isBlank()) ? req.color() : "#10b981";
-        Goal goal = new Goal(null, userId, req.name(), req.description(), color, true);
+        int targetPercentage = req.targetTimePercentage() != null ? req.targetTimePercentage() : 0;
+        Goal goal = new Goal(null, userId, req.name(), req.description(), color, true, targetPercentage);
         return GoalResponse.from(goalRepository.save(goal));
     }
 
     @Transactional(readOnly = true)
     public List<GoalResponse> getAllGoals() {
         UUID userId = securityUtils.getCurrentUserId();
-        return goalRepository.findByUserIdOrderByName(userId)
+        return goalRepository.findByUserIdOrderByTargetTimePercentageDescNameAsc(userId)
                 .stream()
                 .map(g -> GoalResponse.from(g, workAreaRepository.findByGoalIdOrderByName(g.getId())))
                 .toList();
@@ -124,6 +125,7 @@ public class SprintService {
         goal.setName(req.name());
         if (req.description() != null) goal.setDescription(req.description());
         if (req.color() != null && !req.color().isBlank()) goal.setColor(req.color());
+        if (req.targetTimePercentage() != null) goal.setTargetTimePercentage(req.targetTimePercentage());
         Goal saved = goalRepository.save(goal);
         return GoalResponse.from(saved, workAreaRepository.findByGoalIdOrderByName(goalId));
     }
@@ -180,6 +182,24 @@ public class SprintService {
             throw new IllegalArgumentException("Work area does not belong to this goal.");
         }
         workAreaRepository.delete(wa);
+    }
+
+    @Transactional
+    public WorkAreaResponse updateWorkArea(UUID goalId, UUID workAreaId, WorkAreaRequest req) {
+        UUID userId = securityUtils.getCurrentUserId();
+        getOwnedGoal(goalId, userId);
+        WorkArea wa = workAreaRepository.findById(workAreaId)
+                .orElseThrow(() -> new IllegalArgumentException("Work area not found."));
+        if (!wa.getGoalId().equals(goalId)) {
+            throw new IllegalArgumentException("Work area does not belong to this goal.");
+        }
+        if (req.name() != null && !req.name().isBlank()) {
+            wa.setName(req.name());
+        }
+        if (req.description() != null) {
+            wa.setDescription(req.description());
+        }
+        return WorkAreaResponse.from(workAreaRepository.save(wa));
     }
 
     // ─── TimeLog ──────────────────────────────────────────────────────────────
@@ -301,6 +321,23 @@ public class SprintService {
                         .toList();
 
         return new CalendarMatrixResponse(month, cells);
+    }
+
+    @Transactional(readOnly = true)
+    public LifetimeSummaryResponse getLifetimeSummary(UUID sprintId) {
+        UUID userId = securityUtils.getCurrentUserId();
+
+        List<LifetimeSummaryResponse.SummaryCell> cells =
+                timeLogRepository.getLifetimeSummaryRaw(userId, sprintId)
+                        .stream()
+                        .map(row -> new LifetimeSummaryResponse.SummaryCell(
+                                row[0] != null ? UUID.fromString(row[0].toString()) : null,
+                                row[2] != null ? row[2].toString() : null,
+                                ((Number) row[1]).intValue()
+                        ))
+                        .toList();
+
+        return new LifetimeSummaryResponse(cells);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

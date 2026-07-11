@@ -85,6 +85,12 @@ public class SprintController {
         return ResponseEntity.ok(sprintService.getCalendarMatrix(sprintId, month, timezone));
     }
 
+    @GetMapping("/{sprintId}/timelogs/lifetime-summary")
+    public ResponseEntity<LifetimeSummaryResponse> getLifetimeSummary(
+            @PathVariable UUID sprintId) {
+        return ResponseEntity.ok(sprintService.getLifetimeSummary(sprintId));
+    }
+
     // ─── Day Detail ───────────────────────────────────────────────────────────
 
     @GetMapping("/{sprintId}/logs")

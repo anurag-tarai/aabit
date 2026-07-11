@@ -30,4 +30,7 @@ public class Goal {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    @Column(name = "target_time_percentage", nullable = false)
+    private int targetTimePercentage = 0;
 }

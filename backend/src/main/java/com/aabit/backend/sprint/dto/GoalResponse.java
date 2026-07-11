@@ -12,6 +12,7 @@ public record GoalResponse(
         String description,
         String color,
         boolean active,
+        int targetTimePercentage,
         List<WorkAreaResponse> workAreas
 ) {
     public static GoalResponse from(Goal g, List<WorkArea> workAreas) {
@@ -21,11 +22,20 @@ public record GoalResponse(
                 g.getDescription(),
                 g.getColor(),
                 g.isActive(),
+                g.getTargetTimePercentage(),
                 workAreas.stream().map(WorkAreaResponse::from).toList()
         );
     }
 
     public static GoalResponse from(Goal g) {
-        return new GoalResponse(g.getId(), g.getName(), g.getDescription(), g.getColor(), g.isActive(), List.of());
+        return new GoalResponse(
+                g.getId(),
+                g.getName(),
+                g.getDescription(),
+                g.getColor(),
+                g.isActive(),
+                g.getTargetTimePercentage(),
+                List.of()
+        );
     }
 }
