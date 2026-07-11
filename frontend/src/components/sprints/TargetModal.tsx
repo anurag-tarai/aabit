@@ -1,6 +1,8 @@
 import { showErrorToast } from '../../utils/toast';
 import React, { useState } from 'react';
 import { sprintApi, type Target, type Goal, getMondayFromDate } from '../../api/sprintClient';
+import { CustomInput } from '../common/CustomInput';
+import { CustomSelect } from '../common/CustomSelect';
 import { X } from 'lucide-react';
 
 interface TargetModalProps {
@@ -92,7 +94,7 @@ export const TargetModal: React.FC<TargetModalProps> = ({
           {/* Name */}
           <div className="flex flex-col gap-1">
             <label className="text-[9px] text-neutral-500 uppercase font-bold">Target Name *</label>
-            <input
+            <CustomInput
               required
               type="text"
               value={name}
@@ -105,31 +107,28 @@ export const TargetModal: React.FC<TargetModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="flex flex-col gap-1">
               <label className="text-[9px] text-neutral-500 uppercase font-bold">Type</label>
-              <select
+              <CustomSelect
                 value={targetType}
-                onChange={e => {
-                  const val = e.target.value as 'DAILY' | 'WEEKLY';
-                  setTargetType(val);
-                }}
-                className="bg-neutral-900 border border-neutral-800 text-neutral-300 p-2 rounded outline-none"
-              >
-                <option value="WEEKLY">WEEKLY</option>
-                <option value="DAILY">DAILY</option>
-              </select>
+                onChange={val => setTargetType(val as 'DAILY' | 'WEEKLY')}
+                options={[
+                  { value: 'WEEKLY', label: 'WEEKLY' },
+                  { value: 'DAILY', label: 'DAILY' }
+                ]}
+              />
             </div>
 
             {/* Priority */}
             <div className="flex flex-col gap-1">
               <label className="text-[9px] text-neutral-500 uppercase font-bold">Priority</label>
-              <select
+              <CustomSelect
                 value={priority}
-                onChange={e => setPriority(e.target.value as any)}
-                className="bg-neutral-900 border border-neutral-800 text-neutral-300 p-2 rounded outline-none"
-              >
-                <option value="HIGHEST">HIGHEST</option>
-                <option value="MEDIUM">MEDIUM</option>
-                <option value="LOW">LOW</option>
-              </select>
+                onChange={val => setPriority(val as any)}
+                options={[
+                  { value: 'HIGHEST', label: 'HIGHEST' },
+                  { value: 'MEDIUM', label: 'MEDIUM' },
+                  { value: 'LOW', label: 'LOW' }
+                ]}
+              />
             </div>
           </div>
 
@@ -138,7 +137,7 @@ export const TargetModal: React.FC<TargetModalProps> = ({
             <label className="text-[9px] text-neutral-500 uppercase font-bold">
               Target Date (Move target) *
             </label>
-            <input
+            <CustomInput
               required
               type="date"
               value={targetDate}
@@ -151,28 +150,28 @@ export const TargetModal: React.FC<TargetModalProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="flex flex-col gap-1">
               <label className="text-[9px] text-neutral-500 uppercase font-bold">Goal</label>
-              <select
+              <CustomSelect
                 value={selectedGoalId}
-                onChange={e => handleGoalChange(e.target.value)}
-                className="bg-neutral-900 border border-neutral-800 text-neutral-300 p-2 rounded outline-none text-xs"
-              >
-                <option value="">None (Anonymous)</option>
-                {goals.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-              </select>
+                onChange={val => handleGoalChange(val)}
+                options={[
+                  { value: '', label: 'None (Anonymous)' },
+                  ...goals.map(g => ({ value: g.id, label: g.name }))
+                ]}
+              />
             </div>
 
             {/* Work Area selection (optional) */}
             <div className="flex flex-col gap-1">
               <label className="text-[9px] text-neutral-500 uppercase font-bold">Work Area</label>
-              <select
+              <CustomSelect
                 disabled={!selectedGoalId}
                 value={selectedWorkAreaId}
-                onChange={e => setSelectedWorkAreaId(e.target.value)}
-                className="bg-neutral-900 border border-neutral-800 text-neutral-300 p-2 rounded outline-none text-xs disabled:opacity-40"
-              >
-                <option value="">None (Goal Only)</option>
-                {workAreas.map(wa => <option key={wa.id} value={wa.id}>{wa.name}</option>)}
-              </select>
+                onChange={val => setSelectedWorkAreaId(val)}
+                options={[
+                  { value: '', label: 'None (Goal Only)' },
+                  ...workAreas.map(wa => ({ value: wa.id, label: wa.name }))
+                ]}
+              />
             </div>
           </div>
 

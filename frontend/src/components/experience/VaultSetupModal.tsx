@@ -1,3 +1,4 @@
+import { CustomInput } from '../common/CustomInput';
 import { showErrorToast } from '../../utils/toast';
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -141,7 +142,7 @@ export const VaultSetupModal = ({ onComplete }: Props) => {
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">Vault PIN</label>
               <div className={`flex items-center gap-2 bg-black border rounded-lg px-3 py-2 focus-within:border-neutral-500 transition-all ${hasWhitespace ? 'border-red-500/60 bg-red-950/5' : 'border-neutral-800'}`}>
-                <input
+                <CustomInput
                   type={showPin ? "text" : "password"}
                   value={pin}
                   onChange={e => setPin(e.target.value)}
@@ -157,7 +158,7 @@ export const VaultSetupModal = ({ onComplete }: Props) => {
 
             <div className="flex flex-col gap-1.5">
               <label className="text-[10px] font-mono text-neutral-400 uppercase tracking-wider">Confirm PIN</label>
-              <input
+              <CustomInput
                 type="password"
                 value={pinConfirm}
                 onChange={e => setPinConfirm(e.target.value)}
@@ -209,7 +210,7 @@ export const VaultSetupModal = ({ onComplete }: Props) => {
               {copied ? <><Check size={13} className="text-green-400" /> Copied!</> : <><Copy size={13} /> Copy to Clipboard</>}
             </button>
             <label className="flex items-start gap-2 cursor-pointer select-none">
-              <input type="checkbox" checked={phraseAcked} onChange={e => setPhraseAcked(e.target.checked)} className="mt-0.5 accent-green-400" />
+              <CustomInput type="checkbox" checked={phraseAcked} onChange={e => setPhraseAcked(e.target.checked)} className="mt-0.5 accent-green-400" />
               <span className="text-xs text-neutral-400 font-mono">
                 I have saved my recovery phrase. I understand losing it means permanent data loss if I also forget my PIN.
               </span>

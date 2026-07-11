@@ -1,3 +1,4 @@
+import { CustomInput } from '../common/CustomInput';
 import { useState, useEffect } from "react";
 import { Send, Hash, Loader2 } from "lucide-react";
 import { MarkdownToolbar } from "../common/MarkdownToolbar";
@@ -110,7 +111,7 @@ export const ExperienceLogger = ({
       <div className="relative">
         <div className="flex items-center gap-2 p-2 bg-os-bg border border-os-border rounded-lg focus-within:border-gray-500 transition-colors">
           <Hash size={16} className="text-os-muted" />
-          <input
+          <CustomInput
             type="text"
             value={tagInput}
             onChange={(e) => {

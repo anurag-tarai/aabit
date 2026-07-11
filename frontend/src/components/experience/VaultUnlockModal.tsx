@@ -1,3 +1,4 @@
+import { CustomInput } from '../common/CustomInput';
 import { showErrorToast } from '../../utils/toast';
 import { useState, useEffect } from "react";
 import { Lock, Eye, EyeOff, RotateCcw, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
@@ -153,7 +154,7 @@ export const VaultUnlockModal = ({ onUnlocked }: Props) => {
                 {mode === "PIN" ? "Vault PIN" : "Recovery Phrase (12 words)"}
               </label>
               <div className={`flex items-center gap-2 bg-os-bg border rounded-lg px-3 py-2 focus-within:border-gray-500 transition-all ${secretHasSpace ? 'border-red-500/60 bg-red-950/5' : 'border-os-border'}`}>
-                <input
+                <CustomInput
                   type={showSecret ? "text" : "password"}
                   value={secret}
                   onChange={(e) => setSecret(e.target.value)}
@@ -183,7 +184,7 @@ export const VaultUnlockModal = ({ onUnlocked }: Props) => {
                   <label className="text-[10px] font-mono text-os-muted uppercase tracking-wider">
                     New PIN
                   </label>
-                  <input
+                  <CustomInput
                     type="password"
                     value={newPin}
                     onChange={(e) => setNewPin(e.target.value)}
@@ -195,7 +196,7 @@ export const VaultUnlockModal = ({ onUnlocked }: Props) => {
                   <label className="text-[10px] font-mono text-os-muted uppercase tracking-wider">
                     Confirm New PIN
                   </label>
-                  <input
+                  <CustomInput
                     type="password"
                     value={newPinConfirm}
                     onChange={(e) => setNewPinConfirm(e.target.value)}

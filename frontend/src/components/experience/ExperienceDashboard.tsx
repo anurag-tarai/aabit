@@ -1,3 +1,4 @@
+import { CustomInput } from '../common/CustomInput';
 import { useEffect, useState } from 'react';
 import { ExperienceLogger } from './ExperienceLogger';
 import { TagManager } from './TagManager';
@@ -181,7 +182,7 @@ export const ExperienceDashboard = () => {
           <div className="relative">
             <div className="flex items-center gap-2 bg-neutral-900 border border-neutral-800 rounded-lg px-3 py-2 focus-within:border-neutral-600 transition-colors">
               <Search size={14} className="text-neutral-600 flex-shrink-0" />
-              <input
+              <CustomInput
                 type="text"
                 value={searchTagInput}
                 onChange={e => { setSearchTagInput(e.target.value); setShowSearchDropdown(true); }}

@@ -1,3 +1,4 @@
+import { CustomInput } from '../common/CustomInput';
 import { showErrorToast } from '../../utils/toast';
 import React, { useState, useEffect, useCallback } from 'react';
 import { sprintApi, type Sprint, type Goal, type MatrixCell, type TimeLog } from '../../api/sprintClient';
@@ -114,7 +115,7 @@ const EditSprintModal: React.FC<EditSprintModalProps> = ({ sprint, onClose, onSa
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <label className="flex flex-col gap-1 text-xs text-neutral-500 uppercase">
             Name
-            <input
+            <CustomInput
               required
               type="text"
               value={name}
@@ -124,12 +125,12 @@ const EditSprintModal: React.FC<EditSprintModalProps> = ({ sprint, onClose, onSa
           </label>
           <label className="flex flex-col gap-1 text-xs text-neutral-500 uppercase">
             Start
-            <input required type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
+            <CustomInput required type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
               className="bg-neutral-900 border border-neutral-800 text-neutral-300 p-2 rounded outline-none focus:border-emerald-600" />
           </label>
           <label className="flex flex-col gap-1 text-xs text-neutral-500 uppercase">
             End
-            <input required type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
+            <CustomInput required type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
               className="bg-neutral-900 border border-neutral-800 text-neutral-300 p-2 rounded outline-none focus:border-emerald-600" />
           </label>
           <button

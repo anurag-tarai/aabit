@@ -1,3 +1,4 @@
+import { CustomInput } from '../common/CustomInput';
 import React, { useState } from 'react';
 import { sprintApi, type Goal, type TimeLog, type Target } from '../../api/sprintClient';
 import { Clock, Plus, Trash2, Pencil, Target as TargetIcon, Check } from 'lucide-react';
@@ -191,7 +192,7 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
             </div>
             <div className="flex items-center gap-2">
               <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-neutral-500 hover:text-neutral-300">
-                <input
+                <CustomInput
                   type="checkbox"
                   checked={showUnfinished}
                   onChange={(e) => setShowUnfinished(e.target.checked)}

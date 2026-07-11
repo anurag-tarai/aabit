@@ -1,5 +1,7 @@
-import { showErrorToast } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
+import { showErrorToast } from '../../utils/toast';
+import { CustomInput } from '../common/CustomInput';
+import { CustomSelect } from '../common/CustomSelect';
 import { sprintApi, type Goal } from '../../api/sprintClient';
 import { Plus, X, ChevronDown, ChevronRight, Pencil, Trash2, Check } from 'lucide-react';
 
@@ -231,7 +233,7 @@ export const GoalArchitect: React.FC<GoalArchitectProps> = ({ sprintId, activeGo
                 <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: g.color }} />
                 <span className="flex-1 font-bold text-neutral-300 truncate">{g.name}</span>
                 <div className="flex items-center gap-1">
-                  <input
+                  <CustomInput
                     type="number"
                     min={0}
                     max={100}
@@ -265,7 +267,7 @@ export const GoalArchitect: React.FC<GoalArchitectProps> = ({ sprintId, activeGo
         <form onSubmit={handleCreateGoal} className="flex flex-col gap-2 bg-neutral-950 p-3 border border-neutral-900 rounded">
           <span className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">1. New Goal</span>
           <div className="flex gap-2">
-            <input
+            <CustomInput
               type="text"
               required
               placeholder="Goal name..."
@@ -273,7 +275,7 @@ export const GoalArchitect: React.FC<GoalArchitectProps> = ({ sprintId, activeGo
               onChange={e => setNewGoalName(e.target.value)}
               className="flex-1 bg-neutral-900 border border-neutral-800 text-neutral-300 p-2 rounded outline-none focus:border-emerald-600 min-w-0"
             />
-            <input
+            <CustomInput
               type="color"
               value={newGoalColor}
               onChange={e => setNewGoalColor(e.target.value)}
@@ -282,7 +284,7 @@ export const GoalArchitect: React.FC<GoalArchitectProps> = ({ sprintId, activeGo
           </div>
             <div className="flex flex-col gap-0.5">
               <label className="text-[9px] text-neutral-600 font-bold uppercase">Initial Time Target (%)</label>
-              <input
+              <CustomInput
                 type="number"
                 min={0}
                 max={100}
@@ -305,16 +307,14 @@ export const GoalArchitect: React.FC<GoalArchitectProps> = ({ sprintId, activeGo
         <form onSubmit={handleCreateArea} className="flex flex-col gap-2 bg-neutral-950 p-3 border border-neutral-900 rounded">
           <span className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">2. New Work Area</span>
           <div className="flex flex-col gap-2">
-            <select
+            <CustomSelect
               value={selectedGoalForArea}
-              onChange={e => setSelectedGoalForArea(e.target.value)}
-              className="bg-neutral-900 border border-neutral-800 text-neutral-450 p-2 rounded outline-none min-w-0 w-full"
-            >
-              <option value="" disabled>Select goal...</option>
-              {allGoals.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-            </select>
+              onChange={val => setSelectedGoalForArea(val)}
+              options={allGoals.map(g => ({ value: g.id, label: g.name }))}
+              placeholder="Select goal..."
+            />
             <div className="flex gap-2">
-              <input
+              <CustomInput
                 required
                 disabled={!selectedGoalForArea}
                 type="text"
@@ -349,13 +349,13 @@ export const GoalArchitect: React.FC<GoalArchitectProps> = ({ sprintId, activeGo
                 return (
                   <div key={g.id} className="flex flex-col gap-2 bg-neutral-900 rounded p-2 border border-neutral-800">
                     <div className="flex items-center gap-1">
-                      <input
+                      <CustomInput
                         autoFocus
                         value={editGoalName}
                         onChange={e => setEditGoalName(e.target.value)}
                         className="flex-1 bg-neutral-850 border border-neutral-700 text-neutral-205 p-1 rounded outline-none focus:border-emerald-600 text-xs min-w-0 font-bold"
                       />
-                      <input
+                      <CustomInput
                         type="color"
                         value={editGoalColor}
                         onChange={e => setEditGoalColor(e.target.value)}
@@ -465,7 +465,7 @@ export const GoalArchitect: React.FC<GoalArchitectProps> = ({ sprintId, activeGo
                   if (editingWorkAreaId === wa.id) {
                     return (
                       <div key={wa.id} className="flex items-center gap-1 bg-neutral-900 rounded px-2 py-0.5 border border-neutral-800">
-                        <input
+                        <CustomInput
                           autoFocus
                           value={editWorkAreaName}
                           onChange={e => setEditWorkAreaName(e.target.value)}

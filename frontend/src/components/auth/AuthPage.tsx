@@ -1,3 +1,4 @@
+import { CustomInput } from '../common/CustomInput';
 import React, { useState } from 'react';
 import { api } from '../../api/client';
 import type { AuthResponse } from '../../api/client';
@@ -94,7 +95,7 @@ export const AuthPage = () => {
               <label className="text-[10px] font-mono font-bold uppercase text-neutral-400 tracking-wider">User Identity Endpoint</label>
               <div className="flex items-center gap-2.5 bg-[#171717] border border-neutral-800 rounded-lg p-3 focus-within:border-neutral-600 transition-colors">
                 <Mail size={16} className="text-neutral-500" />
-                <input
+                <CustomInput
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -129,7 +130,7 @@ export const AuthPage = () => {
               </div>
               <div className="flex items-center gap-2.5 bg-[#171717] border border-neutral-800 rounded-lg p-3 focus-within:border-neutral-600 transition-colors">
                 <Key size={16} className="text-neutral-500" />
-                <input
+                <CustomInput
                   type="text"
                   maxLength={6}
                   value={otpCode}

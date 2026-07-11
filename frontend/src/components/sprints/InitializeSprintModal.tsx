@@ -1,3 +1,4 @@
+import { CustomInput } from '../common/CustomInput';
 import { showErrorToast } from '../../utils/toast';
 import React, { useState } from 'react';
 import { sprintApi } from '../../api/sprintClient';
@@ -45,7 +46,7 @@ export const InitializeSprintModal: React.FC<InitializeSprintModalProps> = ({ on
 
           <div className="flex flex-col gap-1">
             <label className="text-[10px] text-neutral-600 uppercase font-bold">Name</label>
-            <input
+            <CustomInput
               required
               type="text"
               placeholder="e.g., Jun–Oct 2026"
@@ -58,7 +59,7 @@ export const InitializeSprintModal: React.FC<InitializeSprintModalProps> = ({ on
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
               <label className="text-[10px] text-neutral-600 uppercase font-bold">Start Date</label>
-              <input
+              <CustomInput
                 required
                 type="date"
                 value={startDate}
@@ -68,7 +69,7 @@ export const InitializeSprintModal: React.FC<InitializeSprintModalProps> = ({ on
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-[10px] text-neutral-600 uppercase font-bold">End Date</label>
-              <input
+              <CustomInput
                 required
                 type="date"
                 value={endDate}

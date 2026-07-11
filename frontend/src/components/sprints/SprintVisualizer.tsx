@@ -1,4 +1,5 @@
 import { showErrorToast } from '../../utils/toast';
+import { CustomSelect } from '../common/CustomSelect';
 import React, { useState, useEffect, useCallback } from 'react';
 import { sprintApi, type Sprint, type Goal, type MatrixCell, type Target, type LifetimeSummaryCell, getCurrentWeekMonday } from '../../api/sprintClient';
 import { TimeInvestmentBreakdown } from './TimeInvestmentBreakdown';
@@ -180,21 +181,18 @@ export const SprintVisualizer: React.FC = () => {
           </div>
         </div>
         {/* Sprint selector */}
-        <select
+        <CustomSelect
           value={selectedId}
-          onChange={e => setSelectedId(e.target.value)}
-          className="bg-neutral-900 border border-neutral-800 text-neutral-300 text-xs font-mono px-3 py-1.5 rounded-lg outline-none focus:border-emerald-700 max-w-[220px]"
-        >
-          {sprints.map(s => {
+          onChange={val => setSelectedId(val)}
+          options={sprints.map(s => {
             const label = `${s.name} ${s.status === 'ACTIVE' ? '● ACTIVE' : ''}`;
-            const truncated = label.length > 25 ? label.substring(0, 25) + '....' : label;
-            return (
-              <option key={s.id} value={s.id}>
-                {truncated}
-              </option>
-            );
+            return {
+              value: s.id,
+              label: label.length > 25 ? label.substring(0, 25) + '....' : label
+            };
           })}
-        </select>
+          className="max-w-[220px]"
+        />
       </div>
 
 

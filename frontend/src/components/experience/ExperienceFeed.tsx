@@ -1,3 +1,4 @@
+import { CustomInput } from '../common/CustomInput';
 import React, { useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { MarkdownToolbar } from "../common/MarkdownToolbar";
@@ -241,7 +242,7 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
                 <div className="relative">
                   <div className="flex items-center gap-2 px-3 py-2 bg-neutral-900 border border-neutral-700 rounded-lg focus-within:border-neutral-500 transition-colors">
                     <Hash size={13} className="text-neutral-600" />
-                    <input
+                    <CustomInput
                       type="text"
                       value={editTagInput}
                       onChange={e => { setEditTagInput(e.target.value); setShowEditDropdown(true); }}

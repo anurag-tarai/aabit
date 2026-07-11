@@ -1,3 +1,4 @@
+import { CustomInput } from '../common/CustomInput';
 import { useState, useEffect } from 'react';
 import { X, Edit2, Check, XCircle, Search } from 'lucide-react'; // Added Search icon
 import { api } from '../../api/client';
@@ -65,7 +66,7 @@ export const TagManager = ({ onClose, onTagsChanged }: { onClose: () => void, on
           <div className="p-4 pb-0">
             <div className="relative flex items-center bg-os-bg border border-os-border rounded-lg px-3 py-2 text-sm">
               <Search size={16} className="text-os-muted mr-2 shrink-0" />
-              <input
+              <CustomInput
                 type="text"
                 placeholder="Filter tags..."
                 value={filterText}
@@ -98,7 +99,7 @@ export const TagManager = ({ onClose, onTagsChanged }: { onClose: () => void, on
                 {editingId === tag.id ? (
                   <div className="flex items-center gap-2 w-full">
                     <span className="text-os-muted">#</span>
-                    <input 
+                    <CustomInput 
                       autoFocus
                       type="text" 
                       value={editValue} 

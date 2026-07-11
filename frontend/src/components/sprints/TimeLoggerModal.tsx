@@ -2,6 +2,8 @@ import { showErrorToast } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
 import { sprintApi, type Goal, type TimeLog } from '../../api/sprintClient';
 import { Clock, Send, X, Tag, Pencil } from 'lucide-react';
+import { CustomInput } from '../common/CustomInput';
+import { CustomSelect } from '../common/CustomSelect';
 import { CircularClockPicker } from './CircularClockPicker';
 
 interface TimeLoggerModalProps {
@@ -194,36 +196,28 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
               <>
                 <div className="flex flex-col gap-1">
                   <label className="text-[10px] text-neutral-600 uppercase font-bold pl-0.5">Goal</label>
-                  <select
-                    required
+                  <CustomSelect
                     value={selectedGoalId}
-                    onChange={e => handleGoalChange(e.target.value)}
-                    className="bg-neutral-900 border border-neutral-800 text-neutral-300 p-2 rounded outline-none focus:border-emerald-600 text-xs"
-                  >
-                    <option value="" disabled>Select goal...</option>
-                    {goals.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-                  </select>
+                    onChange={val => handleGoalChange(val)}
+                    placeholder="Select goal..."
+                    options={goals.map(g => ({ value: g.id, label: g.name }))}
+                  />
                 </div>
                 <div className="flex flex-col gap-1">
                   <label className="text-[10px] text-neutral-600 uppercase font-bold pl-0.5">Work Area</label>
-                  <select
-                    required
+                  <CustomSelect
                     disabled={!selectedGoalId || workAreas.length === 0}
                     value={selectedWorkAreaId}
-                    onChange={e => setSelectedWorkAreaId(e.target.value)}
-                    className="bg-neutral-900 border border-neutral-800 text-neutral-300 p-2 rounded outline-none focus:border-emerald-600 text-xs disabled:opacity-40"
-                  >
-                    <option value="" disabled>
-                      {workAreas.length === 0 ? 'No work areas — add in Goals panel' : 'Select work area...'}
-                    </option>
-                    {workAreas.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-                  </select>
+                    onChange={val => setSelectedWorkAreaId(val)}
+                    placeholder={workAreas.length === 0 ? 'No work areas — add in Goals panel' : 'Select work area...'}
+                    options={workAreas.map(w => ({ value: w.id, label: w.name }))}
+                  />
                 </div>
               </>
             ) : (
               <div className="flex flex-col gap-1">
                 <label className="text-[10px] text-neutral-600 uppercase font-bold pl-0.5">Label (optional)</label>
-                <input
+                <CustomInput
                   type="text"
                   placeholder="e.g. Meeting, Break, Admin..."
                   value={anonymousName}
@@ -269,7 +263,7 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
 
             <div className="flex flex-col gap-1">
               <label className="text-[10px] text-neutral-600 uppercase font-bold pl-0.5">Note (optional)</label>
-              <input
+              <CustomInput
                 type="text"
                 placeholder="What did you work on?"
                 value={note}

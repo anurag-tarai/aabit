@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Settings as SettingsIcon, Type, ShieldCheck, LogOut, X } from 'lucide-react';
 import { useFontSize } from './FontSizeContext';
 import { useTheme, type Theme } from './ThemeContext';
+import { CustomSelect } from './CustomSelect';
 import { vault } from '../../utils/vaultCrypto';
 import { api } from '../../api/client';
 import { RegeneratePhraseCard } from './RegeneratePhraseCard';
@@ -44,15 +45,12 @@ const ThemeSelector: React.FC = () => {
   ];
 
   return (
-    <select
+    <CustomSelect
       value={theme}
-      onChange={(e) => setTheme(e.target.value as Theme)}
-      className="bg-neutral-950 border border-neutral-800 text-neutral-300 rounded-lg px-3 py-1.5 text-sm outline-none hover:border-neutral-600 transition-colors cursor-pointer"
-    >
-      {themes.map(t => (
-        <option key={t.value} value={t.value}>{t.label}</option>
-      ))}
-    </select>
+      onChange={(val) => setTheme(val as Theme)}
+      options={themes}
+      className="max-w-[200px]"
+    />
   );
 };
 
