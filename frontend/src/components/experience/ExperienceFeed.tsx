@@ -10,8 +10,6 @@ import {
   Check,
   X,
   Hash,
-  MapPin,
-  Loader2,
 } from "lucide-react";
 import { encryptContent, decryptContent, vault } from "../../utils/vaultCrypto";
 
@@ -38,7 +36,7 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
   const [showEditDropdown, setShowEditDropdown] = useState(false);
 
   const [editLocation, setEditLocation] = useState<string>("");
-  const [fetchingLocation, setFetchingLocation] = useState(false);
+
 
   // Decrypted plaintext cache: entry id → plaintext string
   const [decryptedMap, setDecryptedMap] = useState<Record<string, string>>({});
@@ -139,49 +137,6 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
     }
   };
 
-  const fetchCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser.");
-      return;
-    }
-
-    setFetchingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        try {
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
-          );
-          const data = await response.json();
-          if (data && data.address) {
-            const addr = data.address;
-            const area =
-              addr.suburb || addr.residential || addr.neighbourhood || "";
-            const regionalDistrict =
-              addr.city_district || addr.city || addr.town || "";
-
-            const cleanAddress = [area, regionalDistrict]
-              .filter(Boolean)
-              .join(", ");
-            setEditLocation(cleanAddress);
-          } else {
-            setEditLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
-          }
-        } catch (error) {
-          console.error("Geocoding failed inside update editor:", error);
-          setEditLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
-        } finally {
-          setFetchingLocation(false);
-        }
-      },
-      (error) => {
-        alert(`Failed to get location: ${error.message}`);
-        setFetchingLocation(false);
-      },
-      { enableHighAccuracy: true, timeout: 30000, maximumAge: 300000 },
-    );
-  };
 
   const handleTagInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -327,18 +282,7 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
                   </div>
                 )}
 
-                <div className="flex justify-between items-center pt-2 border-t border-neutral-800">
-                  <div className="flex gap-2">
-                    <button type="button" onClick={() => setEditIsSensitive(!editIsSensitive)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-colors ${editIsSensitive ? 'bg-red-950/30 text-red-400' : 'text-neutral-500 hover:bg-neutral-800 hover:text-neutral-300'}`}>
-                      <Lock size={13} /> {editIsSensitive ? 'Sensitive' : 'Mark sensitive'}
-                    </button>
-                    <button type="button" onClick={fetchCurrentLocation} disabled={fetchingLocation}
-                      className="flex items-center gap-1.5 text-xs text-neutral-500 hover:text-white px-3 py-1.5 rounded-lg hover:bg-neutral-800 transition-colors">
-                      {fetchingLocation ? <Loader2 size={13} className="animate-spin" /> : <MapPin size={13} className={editLocation ? 'text-emerald-400' : ''} />}
-                      {editLocation ? 'Update location' : 'Add location'}
-                    </button>
-                  </div>
+                <div className="flex justify-end items-center pt-2 border-t border-neutral-800">
                   <div className="flex gap-2">
                     <button onClick={() => { setEditingId(null); setEditLocation(''); }}
                       className="flex items-center gap-1 text-xs text-neutral-500 hover:text-white px-3 py-1.5 rounded-lg hover:bg-neutral-800 transition-colors">
