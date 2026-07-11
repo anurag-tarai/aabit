@@ -203,7 +203,7 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
             className="group relative bg-neutral-950 border border-neutral-800 rounded-xl px-6 py-5 hover:border-neutral-700 transition-colors shadow-sm"
           >
             {/* Timestamp + actions row */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div className="flex flex-row items-center justify-between gap-3 mb-4">
               <div className="flex items-center gap-2.5">
                 <span className="text-sm font-semibold text-neutral-300">{dt.label}</span>
                 <span className="text-xs text-neutral-600">{dt.time}</span>
