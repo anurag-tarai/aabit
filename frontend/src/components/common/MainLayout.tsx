@@ -68,6 +68,22 @@ const FloatingDock = () => {
     };
   }, []);
 
+  // Re-clamp position on window resize
+  useEffect(() => {
+    const handleResize = () => {
+      setPos(p => {
+        const nextPos = {
+          x: clamp(p.x, 0, window.innerWidth - 48),
+          y: clamp(p.y, 0, window.innerHeight - 48),
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextPos));
+        return nextPos;
+      });
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // ── Pointer drag handlers ──────────────────────────────────────────────────
   const onPointerDown = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
     // Only drag with primary button / single touch
@@ -130,18 +146,18 @@ const FloatingDock = () => {
           className={`
             absolute top-1/2 -translate-y-1/2
             flex flex-col gap-0.5
-            bg-neutral-950/95 border border-neutral-800
+            bg-neutral-950 border border-neutral-800
             rounded-xl shadow-2xl shadow-black/60 backdrop-blur-md
-            py-2 w-44 animate-in fade-in zoom-in-95 duration-150 origin-left
+            py-2 w-44 animate-in fade-in zoom-in-95 duration-150 origin-left max-w-[calc(100vw-64px)]
           `}
         >
           {/* User chip */}
-          <div className="px-4 pt-2 pb-2 border-b border-neutral-800/60 mb-1">
+          <div className="px-4 pt-2 pb-2 border-b border-neutral-800 mb-1">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center text-[10px] font-bold text-black">
+              <div className="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center text-[10px] font-bold text-black flex-shrink-0">
                 {userName[0]}
               </div>
-              <span className="text-xs font-semibold text-neutral-300 tracking-wide">{userName}</span>
+              <span className="text-xs font-semibold text-neutral-300 tracking-wide truncate">{userName}</span>
             </div>
           </div>
 
@@ -157,8 +173,8 @@ const FloatingDock = () => {
                     : 'text-neutral-400 hover:text-white hover:bg-neutral-900'
                 }`}
               >
-                <Icon size={13} />
-                {label}
+                <Icon size={13} className="flex-shrink-0" />
+                <span className="truncate">{label}</span>
               </button>
             ))}
           </div>
@@ -190,10 +206,9 @@ const FloatingDock = () => {
 // ─── Layout ───────────────────────────────────────────────────────────────────
 export const MainLayout = () => {
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#e5e5e5] font-sans selection:bg-neutral-800 selection:text-white">
+    <div className="min-h-screen bg-os-bg text-os-text font-sans selection:bg-neutral-800 selection:text-white">
       <FloatingDock />
-      {/* No forced right-padding needed anymore — dock floats freely */}
-      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-10">
+      <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-8 py-6 md:py-10">
         <main className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
           <Outlet />
         </main>

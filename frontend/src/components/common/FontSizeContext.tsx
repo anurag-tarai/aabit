@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-type FontSize = 'sm' | 'base' | 'lg' | 'xl';
+type FontSize = 'sm' | 'base' | 'lg' | 'xl' | '2xl' | '3xl';
 
 interface FontSizeContextType {
   fontSize: FontSize;
@@ -11,7 +11,7 @@ interface FontSizeContextType {
 
 const FontSizeContext = createContext<FontSizeContextType | undefined>(undefined);
 
-const fontSizes: FontSize[] = ['sm', 'base', 'lg', 'xl'];
+const fontSizes: FontSize[] = ['sm', 'base', 'lg', 'xl', '2xl', '3xl'];
 
 // Map sizes to the actual CSS root percentage values
 const sizeMap: Record<FontSize, string> = {
@@ -19,6 +19,8 @@ const sizeMap: Record<FontSize, string> = {
   base: '100%',  // Default system standard (usually 16px)
   lg: '115%',   // Scaled up
   xl: '130%',   // High accessibility/readability scale
+  '2xl': '150%', // Extra large
+  '3xl': '175%', // Maximum scale
 };
 
 export const FontSizeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

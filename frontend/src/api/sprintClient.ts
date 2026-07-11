@@ -23,6 +23,7 @@ export interface Goal {
   description?: string;
   color: string;
   active: boolean;
+  targetTimePercentage: number;
   workAreas: WorkArea[];
 }
 
@@ -36,6 +37,16 @@ export interface MatrixCell {
 export interface CalendarMatrixResponse {
   month: string;
   matrix: MatrixCell[];
+}
+
+export interface LifetimeSummaryCell {
+  goalId: string | null;
+  anonymousLabel: string | null;
+  totalMinutes: number;
+}
+
+export interface LifetimeSummaryResponse {
+  summary: LifetimeSummaryCell[];
 }
 
 export interface TimeLog {
@@ -53,11 +64,15 @@ export interface TimeLog {
 
 export interface Target {
   id: string;
-  workAreaId: string;
+  workAreaId: string | null;
+  goalId: string | null;
+  targetType: 'DAILY' | 'WEEKLY';
+  targetDate: string | null;
+  isFixed: boolean;
+  priority: 'HIGHEST' | 'MEDIUM' | 'LOW';
   name: string;
   weekStartDate: string;
   completed: boolean;
-  repeating: boolean;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -80,6 +95,19 @@ export function getCurrentWeekMonday(): string {
   const mm = String(monday.getMonth() + 1).padStart(2, '0');
   const dd = String(monday.getDate()).padStart(2, '0');
   
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+export function getMondayFromDate(dateStr: string): string {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const day = date.getDay();
+  const distanceToMonday = day === 0 ? 6 : day - 1;
+  const monday = new Date(date);
+  monday.setDate(date.getDate() - distanceToMonday);
+  const yyyy = monday.getFullYear();
+  const mm = String(monday.getMonth() + 1).padStart(2, '0');
+  const dd = String(monday.getDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
 }
 
@@ -120,11 +148,13 @@ export const sprintApi = {
   removeGoalFromSprint: (sprintId: string, goalId: string) =>
     api.delete(`/sprints/${sprintId}/goals/${goalId}`),
 
-  // Calendar Matrix
+  // Calendar Matrix & Summary
   getCalendarMatrix: (sprintId: string, month: string) =>
     api.get<CalendarMatrixResponse>(
       `/sprints/${sprintId}/calendar?month=${month}&timezone=${encodeURIComponent(TZ)}`
     ),
+  getLifetimeSummary: (sprintId: string) =>
+    api.get<LifetimeSummaryResponse>(`/sprints/${sprintId}/timelogs/lifetime-summary`),
 
   // Day Detail
   getLogsForDay: (sprintId: string, day: string) =>
@@ -159,9 +189,9 @@ export const sprintApi = {
   // Global Goal Pool
   getAllGoals: () =>
     api.get<Goal[]>('/goals'),
-  createGoal: (payload: { name: string; color: string; description?: string }) =>
+  createGoal: (payload: { name: string; color: string; description?: string; targetTimePercentage?: number }) =>
     api.post<Goal>('/goals', payload),
-  updateGoal: (goalId: string, payload: { name: string; color: string; description?: string }) =>
+  updateGoal: (goalId: string, payload: { name: string; color: string; description?: string; targetTimePercentage?: number }) =>
     api.patch<Goal>(`/goals/${goalId}`, payload),
   deleteGoal: (goalId: string) =>
     api.delete(`/goals/${goalId}`),
@@ -171,18 +201,36 @@ export const sprintApi = {
     api.get<WorkArea[]>(`/goals/${goalId}/work-areas`),
   createWorkArea: (goalId: string, payload: { name: string; description?: string }) =>
     api.post<WorkArea>(`/goals/${goalId}/work-areas`, payload),
+  updateWorkArea: (goalId: string, workAreaId: string, payload: { name: string; description?: string }) =>
+    api.patch<WorkArea>(`/goals/${goalId}/work-areas/${workAreaId}`, payload),
   deleteWorkArea: (goalId: string, workAreaId: string) =>
     api.delete(`/goals/${goalId}/work-areas/${workAreaId}`),
 
   // Targets
   getTargetsForWeek: (weekStart: string) =>
     api.get<Target[]>(`/targets?weekStart=${weekStart}`),
-  createTarget: (payload: { workAreaId: string; name: string; weekStartDate?: string; repeating: boolean }) =>
-    api.post<Target>('/targets', payload),
+  createTarget: (payload: {
+    workAreaId?: string | null;
+    goalId?: string | null;
+    targetType: 'DAILY' | 'WEEKLY';
+    targetDate?: string | null;
+    isFixed?: boolean;
+    priority?: 'HIGHEST' | 'MEDIUM' | 'LOW';
+    name: string;
+    weekStartDate?: string;
+  }) => api.post<Target>('/targets', payload),
   toggleTargetComplete: (targetId: string) =>
     api.patch<Target>(`/targets/${targetId}/toggle`),
-  updateTarget: (targetId: string, payload: { workAreaId?: string; name?: string; repeating: boolean }) =>
-    api.patch<Target>(`/targets/${targetId}`, payload),
+  updateTarget: (targetId: string, payload: {
+    workAreaId?: string | null;
+    goalId?: string | null;
+    targetType?: 'DAILY' | 'WEEKLY';
+    targetDate?: string | null;
+    isFixed?: boolean;
+    priority?: 'HIGHEST' | 'MEDIUM' | 'LOW';
+    name?: string;
+    weekStartDate?: string;
+  }) => api.patch<Target>(`/targets/${targetId}`, payload),
   deleteTarget: (targetId: string) =>
     api.delete(`/targets/${targetId}`),
 };

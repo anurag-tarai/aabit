@@ -56,7 +56,7 @@ export const RegeneratePhraseCard = () => {
   };
 
   return (
-    <div className="border border-neutral-800 bg-neutral-900/40 p-4 rounded-xl flex flex-col gap-3 font-mono text-xs">
+    <div className="border border-neutral-800 bg-neutral-900 p-4 rounded-xl flex flex-col gap-3 font-mono text-xs">
       <div>
         <h4 className="font-bold uppercase tracking-wider text-[11px] flex items-center gap-1.5 text-yellow-500">
           <ShieldAlert size={13} /> Lost Recovery Phrase?

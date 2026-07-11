@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { sprintApi, type Goal, type TimeLog } from '../../api/sprintClient';
 import { Clock, Send, X, Tag, Pencil } from 'lucide-react';
+import { CircularClockPicker } from './CircularClockPicker';
 
 interface TimeLoggerModalProps {
   sprintId: string;
@@ -9,6 +10,7 @@ interface TimeLoggerModalProps {
   onClose: () => void;
   onSuccess: () => void;
   editingLog?: TimeLog; // ★ optional — when set, switches to edit mode
+  preselectedGoalId?: string; // ★ optional — preselects a goal from grid click
 }
 
 const LiveClock: React.FC = () => {
@@ -40,17 +42,17 @@ const isoToHHMM = (iso: string) => {
 type LogMode = 'goal' | 'anonymous';
 
 export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
-  sprintId, goals, preselectedDate, onClose, onSuccess, editingLog,
+  sprintId, goals, preselectedDate, onClose, onSuccess, editingLog, preselectedGoalId
 }) => {
   const isEditing = !!editingLog;
   
-  // Derive initial mode from editingLog
+  // Derive initial mode from editingLog or preselectedGoalId
   const initMode: LogMode = editingLog
     ? (editingLog.goalId ? 'goal' : 'anonymous')
     : 'goal';
 
   const [mode, setMode] = useState<LogMode>(initMode);
-  const [selectedGoalId, setSelectedGoalId] = useState(editingLog?.goalId ?? '');
+  const [selectedGoalId, setSelectedGoalId] = useState(editingLog?.goalId ?? preselectedGoalId ?? '');
   const [selectedWorkAreaId, setSelectedWorkAreaId] = useState(editingLog?.workAreaId ?? '');
   const [anonymousName, setAnonymousName] = useState(editingLog?.anonymousName ?? '');
   const [startTime, setStartTime] = useState(editingLog ? isoToHHMM(editingLog.startTime) : '');
@@ -58,6 +60,9 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
   const [note, setNote] = useState(editingLog?.note ?? '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Clock picker popups state
+  const [clockPickerTarget, setClockPickerTarget] = useState<'start' | 'end' | null>(null);
 
   const selectedGoal = goals.find(g => g.id === selectedGoalId);
   const workAreas = selectedGoal?.workAreas ?? [];
@@ -79,8 +84,8 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
         // ★ EDIT mode — PATCH existing log
         if (mode === 'goal') {
           await sprintApi.updateTimeLog(editingLog.id, {
-            goalId: selectedGoalId,
-            workAreaId: selectedWorkAreaId,
+            goalId: selectedGoalId || null,
+            workAreaId: selectedWorkAreaId || null,
             anonymousName: null,
             startTime: start,
             endTime: end,
@@ -125,7 +130,7 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#0a0a0a] border border-neutral-800 rounded-lg max-w-sm w-full font-mono text-sm shadow-2xl overflow-hidden">
+      <div className="bg-[#0a0a0a] border border-neutral-800 rounded-lg max-w-sm w-full font-mono text-sm shadow-2xl overflow-hidden animate-in zoom-in duration-150">
         
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-neutral-900">
@@ -220,24 +225,26 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
               </div>
             )}
 
-            {/* Time range */}
+            {/* Time range using custom round clock picker */}
             <div className="grid grid-cols-2 gap-3">
               {(['Start', 'End'] as const).map(label => {
                 const val = label === 'Start' ? startTime : endTime;
                 const setVal = label === 'Start' ? setStartTime : setEndTime;
+                const targetKey = label === 'Start' ? 'start' : 'end';
                 return (
                   <div key={label} className="flex flex-col gap-1">
                     <div className="flex items-center justify-between pl-0.5">
                       <label className="text-[10px] text-neutral-600 uppercase font-bold">{label}</label>
-                      <button type="button" onClick={() => setVal(nowHHMM())} className="text-[9px] text-neutral-600 hover:text-emerald-400 transition-colors">NOW</button>
+                      <button type="button" onClick={() => setVal(nowHHMM())} className="text-[9px] text-neutral-600 hover:text-emerald-400 transition-colors font-bold">NOW</button>
                     </div>
-                    <input
-                      required
-                      type="time"
-                      value={val}
-                      onChange={e => setVal(e.target.value)}
-                      className="bg-neutral-900 border border-neutral-800 text-neutral-300 p-2 rounded outline-none focus:border-emerald-600 text-xs"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => setClockPickerTarget(targetKey)}
+                      className="w-full text-left bg-neutral-900 border border-neutral-800 text-neutral-300 p-2 rounded outline-none hover:border-emerald-700/80 transition-colors flex items-center justify-between text-xs font-mono h-9"
+                    >
+                      <span>{val || '--:--'}</span>
+                      <Clock size={11} className="text-neutral-500" />
+                    </button>
                   </div>
                 );
               })}
@@ -263,7 +270,7 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
             <button
               type="submit"
               disabled={loading}
-              className="mt-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-black font-bold py-2 rounded transition-colors disabled:opacity-50 text-xs"
+              className="mt-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-black font-bold py-2 rounded transition-colors disabled:opacity-50 text-xs shadow-md"
             >
               <Send size={13} />
               {loading ? 'SAVING...' : isEditing ? 'SAVE CHANGES' : 'COMMIT LOG'}
@@ -272,6 +279,23 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
         </div>
 
       </div>
+
+      {/* Render the Custom Android-style circular clock picker */}
+      {clockPickerTarget && (
+        <CircularClockPicker
+          initialTime={clockPickerTarget === 'start' ? startTime : endTime}
+          title={`Select ${clockPickerTarget === 'start' ? 'Start' : 'End'} Time`}
+          onClose={() => setClockPickerTarget(null)}
+          onSave={(timeStr) => {
+            if (clockPickerTarget === 'start') {
+              setStartTime(timeStr);
+            } else {
+              setEndTime(timeStr);
+            }
+            setClockPickerTarget(null);
+          }}
+        />
+      )}
     </div>
   );
 };

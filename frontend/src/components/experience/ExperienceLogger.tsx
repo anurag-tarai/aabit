@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Send, Lock, Hash, Loader2 } from "lucide-react";
+import { Send, Hash, Loader2 } from "lucide-react";
 import { MarkdownToolbar } from "../common/MarkdownToolbar";
 import { api } from "../../api/client";
 import type { Tag, ExperienceRequest } from "../../api/client";
@@ -18,9 +18,6 @@ export const ExperienceLogger = ({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
-
-  const [location, setLocation] = useState<string>("");
-  const [fetchingLocation, setFetchingLocation] = useState(false);
 
   useEffect(() => {
     api
@@ -63,9 +60,6 @@ export const ExperienceLogger = ({
     setIsSubmitting(true);
     try {
       let finalContent = content;
-      if (location) {
-        finalContent += `\n\n\`\`\`\n📍 ${location}\n\`\`\``;
-      }
 
       const encryptedContent = await encryptContent(finalContent, masterKey);
 
@@ -80,7 +74,6 @@ export const ExperienceLogger = ({
       setContent("");
       setSelectedTags([]);
       setIsSensitive(false);
-      setLocation("");
       onLogSuccess();
     } catch (error) {
       console.error("Failed to log experience", error);
@@ -90,49 +83,7 @@ export const ExperienceLogger = ({
     }
   };
 
-  const fetchCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser.");
-      return;
-    }
 
-    setFetchingLocation(true);
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        try {
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`,
-          );
-          const data = await response.json();
-          if (data && data.address) {
-            const addr = data.address;
-            const area =
-              addr.suburb || addr.residential || addr.neighbourhood || "";
-            const regionalDistrict =
-              addr.city_district || addr.city || addr.town || "";
-
-            const cleanAddress = [area, regionalDistrict]
-              .filter(Boolean)
-              .join(", ");
-            setLocation(cleanAddress);
-          } else {
-            setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
-          }
-        } catch (error) {
-          console.error("Geocoding failed:", error);
-          setLocation(`${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
-        } finally {
-          setFetchingLocation(false);
-        }
-      },
-      (error) => {
-        alert(`Failed to get location: ${error.message}`);
-        setFetchingLocation(false);
-      },
-      { enableHighAccuracy: true, timeout: 30000, maximumAge: 300000 },
-    );
-  };
 
   return (
     <div className="bg-os-surface border border-os-border rounded-xl p-4 flex flex-col gap-3 shadow-2xl">
@@ -155,26 +106,6 @@ export const ExperienceLogger = ({
           isSensitive ? "blur-[3px] focus:blur-none hover:blur-none" : ""
         }`}
       />
-
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={fetchCurrentLocation}
-            disabled={fetchingLocation}
-            className="flex items-center gap-1.5 text-xs bg-os-bg border border-os-border hover:text-white px-2.5 py-1.5 rounded-lg text-os-muted transition-colors cursor-pointer"
-          >
-            {fetchingLocation
-              ? "Getting Location..."
-              : "📍 Auto-Attach Location"}
-          </button>
-        </div>
-        {location && (
-          <p className="text-[11px] text-green-400 bg-os-bg/50 border border-os-border/50 rounded-md p-2 font-mono break-words">
-            Will append: 📍 {location}
-          </p>
-        )}
-      </div>
 
       <div className="relative">
         <div className="flex items-center gap-2 p-2 bg-os-bg border border-os-border rounded-lg focus-within:border-gray-500 transition-colors">
@@ -233,20 +164,7 @@ export const ExperienceLogger = ({
         </div>
       )}
 
-      <div className="flex justify-between items-center pt-2 border-t border-os-border">
-        <button
-          type="button"
-          onClick={() => setIsSensitive(!isSensitive)}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-            isSensitive
-              ? "bg-red-900/20 text-red-400"
-              : "text-os-muted hover:bg-os-bg hover:text-os-text"
-          }`}
-        >
-          <Lock size={14} />
-          {isSensitive ? "Sensitive" : "Not Sensitive"}
-        </button>
-
+      <div className="flex justify-end items-center pt-2 border-t border-os-border">
         <button
           type="button"
           onClick={handleSubmit}

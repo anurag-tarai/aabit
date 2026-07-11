@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { sprintApi, type Sprint, type Goal, type MatrixCell, type Target, getCurrentWeekMonday } from '../../api/sprintClient';
+import { sprintApi, type Sprint, type Goal, type MatrixCell, type Target, type LifetimeSummaryCell, getCurrentWeekMonday } from '../../api/sprintClient';
+import { TimeInvestmentBreakdown } from './TimeInvestmentBreakdown';
 import { BarChart2, Target as TargetIcon, Clock, TrendingUp, Layers, AlertCircle } from 'lucide-react';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -42,7 +43,7 @@ const Card: React.FC<{ children: React.ReactNode; className?: string; span2?: bo
   children, className = '', span2 = false,
 }) => (
   <div className={`
-    bg-neutral-950 border border-neutral-800/80 rounded-2xl p-5
+    bg-neutral-950 border border-neutral-800 rounded-2xl p-5
     ${span2 ? 'md:col-span-2' : ''}
     ${className}
   `}>
@@ -66,6 +67,7 @@ export const SprintVisualizer: React.FC = () => {
   const [targets, setTargets]       = useState<Target[]>([]);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState<string | null>(null);
+  const [lifetimeSummary, setLifetimeSummary] = useState<LifetimeSummaryCell[]>([]);
 
   // Load all sprints on mount
   useEffect(() => {
@@ -99,19 +101,18 @@ export const SprintVisualizer: React.FC = () => {
         m++; if (m > 12) { m = 1; y++; }
       }
 
-      const [goalsRes, ...matrixResults] = await Promise.all([
+      const [goalsRes, targetsRes, lifetimeRes, ...matrixResults] = await Promise.all([
         sprintApi.getSprintGoals(sprintId),
+        sprintApi.getTargetsForWeek(getCurrentWeekMonday()),
+        sprintApi.getLifetimeSummary(sprintId),
         ...monthSet.map(mo => sprintApi.getCalendarMatrix(sprintId, mo)),
       ]);
 
       const allCells = matrixResults.flatMap(r => r.data.matrix);
       setGoals(goalsRes.data);
       setMatrix(allCells);
-
-      // Targets for current week
-      const weekStart = getCurrentWeekMonday();
-      const targetsRes = await sprintApi.getTargetsForWeek(weekStart);
       setTargets(targetsRes.data);
+      setLifetimeSummary(lifetimeRes.data.summary);
     } catch {
       setError('Failed to load sprint data.');
     } finally {
@@ -136,7 +137,7 @@ export const SprintVisualizer: React.FC = () => {
 
   // Targets stats — scoped to work areas that belong to this sprint's goals
   const sprintWorkAreaIds = new Set(goals.flatMap(g => g.workAreas.map(w => w.id)));
-  const sprintTargets     = targets.filter(t => sprintWorkAreaIds.has(t.workAreaId));
+  const sprintTargets     = targets.filter(t => t.workAreaId && sprintWorkAreaIds.has(t.workAreaId));
   const completedTargets  = sprintTargets.filter(t => t.completed).length;
   const totalTargets      = sprintTargets.length;
 
@@ -155,9 +156,6 @@ export const SprintVisualizer: React.FC = () => {
 
   // Target completion pct
   const targetPct = totalTargets === 0 ? 0 : completedTargets / totalTargets;
-
-  // Hours allocation pct per goal
-  const maxGoalMins = Math.max(1, ...minutesByGoal.map(g => g.minutes));
 
   // ── Render ──────────────────────────────────────────────────────────────────
   if (sprints.length === 0 && !loading) {
@@ -205,7 +203,7 @@ export const SprintVisualizer: React.FC = () => {
       {loading ? (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="bg-neutral-950 border border-neutral-800/80 rounded-2xl p-5 h-32 animate-pulse" />
+            <div key={i} className="bg-neutral-950 border border-neutral-800 rounded-2xl p-5 h-32 animate-pulse" />
           ))}
         </div>
       ) : (
@@ -279,126 +277,129 @@ export const SprintVisualizer: React.FC = () => {
             </div>
           </Card>
 
-          {/* ── Card 5 (wide): Hours per Goal bar chart ──────────────────────── */}
-          <Card span2 className="md:col-span-2">
-            <Label>Hours by Goal</Label>
-            {minutesByGoal.length === 0 ? (
-              <p className="text-neutral-700 font-mono text-xs mt-4">No goal-linked logs yet.</p>
-            ) : (
-              <div className="mt-4 flex flex-col gap-3">
-                {minutesByGoal
-                  .sort((a, b) => b.minutes - a.minutes)
-                  .map(({ goal, minutes }) => {
-                    const pct = maxGoalMins === 0 ? 0 : minutes / maxGoalMins;
-                    return (
-                      <div key={goal.id} className="flex items-center gap-3">
-                        <span
-                          className="text-[10px] font-mono font-bold w-24 truncate flex-shrink-0"
-                          style={{ color: goal.color }}
-                        >
-                          {goal.name}
-                        </span>
-                        <div className="flex-1 h-2 bg-neutral-900 rounded-full overflow-hidden">
-                          <div
-                            className="h-full rounded-full transition-all duration-700"
-                            style={{ width: `${pct * 100}%`, backgroundColor: goal.color }}
-                          />
-                        </div>
-                        <span className="text-[10px] font-mono text-neutral-400 w-14 text-right flex-shrink-0 tabular-nums">
-                          {fmtMins(minutes)}
-                        </span>
-                      </div>
-                    );
-                  })}
-                {totalAnonMinutes > 0 && (
-                  <div className="flex items-center gap-3">
-                    <span className="text-[10px] font-mono font-bold w-24 truncate flex-shrink-0 text-slate-500">
-                      Misc / Anon
-                    </span>
-                    <div className="flex-1 h-2 bg-neutral-900 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-700 bg-slate-600"
-                        style={{ width: `${(totalAnonMinutes / maxGoalMins) * 100}%` }}
-                      />
-                    </div>
-                    <span className="text-[10px] font-mono text-slate-500 w-14 text-right flex-shrink-0 tabular-nums">
-                      {fmtMins(totalAnonMinutes)}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-          </Card>
 
           {/* ── Card 6 (wide): Sprint info + date range ──────────────────────── */}
-          <Card span2 className="md:col-span-2">
-            <Label>Sprint Timeline</Label>
+          <Card span2 className="md:col-span-4 bg-neutral-900">
+            <Label className="text-neutral-500">Sprint Timeline</Label>
             {sprint && (
-              <div className="mt-4 flex flex-col gap-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-white font-bold text-sm">{sprint.name}</p>
-                    <p className="text-neutral-600 font-mono text-[10px] mt-0.5">
-                      {sprint.startDate} → {sprint.endDate}
-                    </p>
+              <div className="mt-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex flex-col gap-1">
+                  <p className="text-white font-bold text-lg">{sprint.name}</p>
+                  <p className="text-neutral-500 font-mono text-xs">
+                    {sprint.startDate} → {sprint.endDate}
+                  </p>
+                  <div className="mt-2">
+                    <span className={`text-xs font-mono font-bold px-2.5 py-1 rounded-full border ${
+                      sprint.status === 'ACTIVE'
+                        ? 'text-emerald-400 border-emerald-800 bg-emerald-950/40'
+                        : 'text-neutral-500 border-neutral-800 bg-neutral-900'
+                    }`}>
+                      {sprint.status}
+                    </span>
                   </div>
-                  <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full border ${
-                    sprint.status === 'ACTIVE'
-                      ? 'text-emerald-400 border-emerald-800 bg-emerald-950/40'
-                      : 'text-neutral-500 border-neutral-800 bg-neutral-900/40'
-                  }`}>
-                    {sprint.status}
-                  </span>
                 </div>
 
-                {/* Progress bar: days elapsed */}
-                {(() => {
-                  const start   = new Date(sprint.startDate).getTime();
-                  const end     = new Date(sprint.endDate).getTime();
-                  const now     = Math.min(new Date().getTime(), end);
-                  const elapsed = Math.max(0, now - start);
-                  const total   = end - start;
-                  const pct     = total === 0 ? 1 : elapsed / total;
-                  const daysLeft = Math.max(0, Math.ceil((end - Date.now()) / 86400000));
-                  return (
-                    <div className="flex flex-col gap-1.5">
-                      <div className="flex justify-between text-[10px] font-mono text-neutral-600">
-                        <span>Sprint progress</span>
-                        <span>{daysLeft > 0 ? `${daysLeft}d remaining` : 'Ended'}</span>
-                      </div>
-                      <div className="h-2 bg-neutral-900 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-emerald-700 rounded-full transition-all duration-700"
-                          style={{ width: `${pct * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })()}
+                <div className="flex-1 max-w-xl flex flex-col gap-5">
+                  {/* Progress bar: days elapsed */}
+                  {(() => {
+                    const sprintStartMs = new Date(sprint.startDate).getTime();
+                    const sprintEndMs = new Date(sprint.endDate).getTime();
+                    const nowMs = new Date().getTime();
+                    const daysLeft = Math.max(0, Math.ceil((sprintEndMs - nowMs) / 86400000));
+                    
+                    // Generate months
+                    const [sy, sm] = sprint.startDate.split('-').map(Number);
+                    const [ey, em] = sprint.endDate.split('-').map(Number);
+                    const months: string[] = [];
+                    let y = sy, m = sm;
+                    while (y < ey || (y === ey && m <= em)) {
+                      months.push(`${y}-${String(m).padStart(2, '0')}`);
+                      m++;
+                      if (m > 12) { m = 1; y++; }
+                    }
 
-                {/* Goal allocation summary */}
-                <div className="flex items-center gap-2 flex-wrap">
-                  <TrendingUp size={11} className="text-neutral-600" />
-                  <span className="text-[10px] font-mono text-neutral-600">
-                    Avg per active day:{' '}
-                    <span className="text-white">
-                      {activeDays === 0 ? '—' : fmtMins(Math.round(totalMinutes / activeDays))}
-                    </span>
-                  </span>
-                  <span className="text-neutral-800 font-mono">·</span>
-                  <Clock size={10} className="text-neutral-600" />
-                  <span className="text-[10px] font-mono text-neutral-600">
-                    Goal focus:{' '}
-                    <span className="text-emerald-500">
-                      {fmtPct(totalGoalMinutes, totalMinutes)}
-                    </span>
-                  </span>
+                    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+                    return (
+                      <div className="flex flex-col gap-2">
+                        <div className="flex justify-between text-xs font-mono text-neutral-500 mb-1">
+                          <span>Sprint Progress</span>
+                          <span className="text-emerald-500">{daysLeft > 0 ? `${daysLeft}d remaining` : 'Ended'}</span>
+                        </div>
+                        <div className="flex gap-1.5 w-full">
+                          {months.map((mStr) => {
+                            const [my, mm] = mStr.split('-').map(Number);
+                            const mStartMs = new Date(my, mm - 1, 1).getTime();
+                            const mEndMs = new Date(my, mm, 0, 23, 59, 59, 999).getTime(); // last day of month
+
+                            const actualStartMs = Math.max(sprintStartMs, mStartMs);
+                            const actualEndMs = Math.min(sprintEndMs, mEndMs);
+                            
+                            const totalDaysInSegment = (actualEndMs - actualStartMs) / 86400000;
+                            const flexWeight = Math.max(1, Math.round(totalDaysInSegment));
+
+                            const elapsedMs = Math.max(0, Math.min(nowMs, actualEndMs) - actualStartMs);
+                            const segmentTotalMs = actualEndMs - actualStartMs;
+                            const pct = segmentTotalMs <= 0 ? 0 : Math.min(1, elapsedMs / segmentTotalMs);
+
+                            const monthName = monthNames[mm - 1];
+
+                            return (
+                              <div key={mStr} className="flex flex-col gap-1.5" style={{ flexGrow: flexWeight, flexBasis: 0 }}>
+                                <div className="h-2.5 bg-neutral-950 rounded-full overflow-hidden border border-neutral-800 relative">
+                                  <div
+                                    className={`h-full rounded-full transition-all duration-1000 ease-out absolute top-0 left-0 ${pct === 1 ? 'bg-emerald-700' : 'bg-emerald-500'}`}
+                                    style={{ width: `${pct * 100}%` }}
+                                  />
+                                </div>
+                                <span className="text-[10px] font-mono text-neutral-600 text-center uppercase tracking-wider">
+                                  {monthName}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Goal allocation summary */}
+                  <div className="flex items-center gap-4 text-xs font-mono">
+                    <div className="flex items-center gap-2 bg-neutral-950 px-3 py-1.5 rounded border border-neutral-800">
+                      <TrendingUp size={13} className="text-neutral-500" />
+                      <span className="text-neutral-400">
+                        Avg per active day:{' '}
+                        <span className="text-white font-bold ml-1">
+                          {activeDays === 0 ? '—' : fmtMins(Math.round(totalMinutes / activeDays))}
+                        </span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 bg-neutral-950 px-3 py-1.5 rounded border border-neutral-800">
+                      <Clock size={13} className="text-neutral-500" />
+                      <span className="text-neutral-400">
+                        Goal focus:{' '}
+                        <span className="text-emerald-400 font-bold ml-1">
+                          {fmtPct(totalGoalMinutes, totalMinutes)}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
           </Card>
 
         </div>
+      )}
+
+      {/* ── Time Investment Tracker ────────────────────────────────────────── */}
+      {!loading && !error && sprints.length > 0 && (
+        <TimeInvestmentBreakdown
+          goals={goals}
+          matrixData={matrix}
+          lifetimeSummary={lifetimeSummary}
+          selectedDay={new Date().toLocaleDateString('en-CA')} // YYYY-MM-DD
+        />
       )}
     </div>
   );

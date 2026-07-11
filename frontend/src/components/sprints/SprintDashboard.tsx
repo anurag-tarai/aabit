@@ -5,7 +5,8 @@ import { MatrixHeatmap } from './MatrixHeatmap';
 import { GoalArchitect } from './GoalArchitect';
 import { InitializeSprintModal } from './InitializeSprintModal';
 import { DayDetailPanel } from './DayDetailPanel';
-import { WeeklyTargetsPane } from './WeeklyTargetsPane';
+import { TargetModal } from './TargetModal';
+import { getCurrentWeekMonday } from '../../api/sprintClient';
 import {
   Activity, AlertTriangle, ChevronLeft, ChevronRight,
   List, Plus, Pencil, Trash2, CheckCircle, X,
@@ -175,10 +176,33 @@ export const SprintDashboard: React.FC = () => {
   const [showLogModal, setShowLogModal] = useState(false);
   const [dayLogs, setDayLogs] = useState<TimeLog[]>([]);
   const [dayLogsLoading, setDayLogsLoading] = useState(false);
+  const [preselectedGoalId, setPreselectedGoalId] = useState<string | undefined>();
+
+  // Targets state
+  const [targets, setTargets] = useState<any[]>([]);
+  const [targetsLoading, setTargetsLoading] = useState(false);
+  const [showTargetModal, setShowTargetModal] = useState(false);
+  const [editingTarget, setEditingTarget] = useState<any | null>(null);
 
   // Compute months available in this sprint
   const sprintMonths = activeSprint ? getSprintMonths(activeSprint) : [];
   const currentMonthStr = sprintMonths[monthIndex] ?? sprintMonths[0];
+
+  const loadTargets = useCallback(async () => {
+    setTargetsLoading(true);
+    try {
+      const res = await sprintApi.getTargetsForWeek(getCurrentWeekMonday());
+      setTargets(res.data);
+    } finally {
+      setTargetsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeSprint) {
+      loadTargets();
+    }
+  }, [activeSprint, loadTargets]);
 
   const loadSprints = useCallback(async () => {
     const res = await sprintApi.getAllSprints();
@@ -251,12 +275,6 @@ export const SprintDashboard: React.FC = () => {
       .finally(() => setDayLogsLoading(false));
   }, [activeSprint, selectedDay]);
 
-  const handleDayClick = (day: number) => {
-    if (!currentMonthStr) return;
-    const [y, m] = currentMonthStr.split('-');
-    setSelectedDay(`${y}-${m}-${String(day).padStart(2, '0')}`);
-    setShowLogModal(true);
-  };
 
   const handleSprintSwitch = async (sprint: Sprint) => {
     setActiveSprint(sprint);
@@ -287,6 +305,62 @@ export const SprintDashboard: React.FC = () => {
       setCompleteConfirm(false);
     } catch (err) {
       console.error('Complete sprint failed', err);
+    }
+  };
+
+  const handleTargetToggle = async (t: any) => {
+    await sprintApi.toggleTargetComplete(t.id);
+    loadTargets();
+  };
+
+  const handleTargetDelete = async (t: any) => {
+    await sprintApi.deleteTarget(t.id);
+    loadTargets();
+  };
+
+  const handleTargetMove = async (t: any) => {
+    const isDaily = t.targetType === 'DAILY';
+    const dateStr = isDaily ? t.targetDate : t.weekStartDate;
+    if (!dateStr) return;
+    
+    const date = new Date(dateStr);
+    date.setDate(date.getDate() + (isDaily ? 1 : 7));
+    const newDateStr = date.toISOString().split('T')[0];
+
+    const payload: any = { name: t.name };
+    if (isDaily) {
+      payload.targetDate = newDateStr;
+    } else {
+      payload.weekStartDate = newDateStr;
+    }
+
+    await sprintApi.updateTarget(t.id, payload);
+    loadTargets();
+  };
+
+  const handleDaySelect = async (day: number) => {
+    const dStr = `${currentMonthStr}-${String(day).padStart(2, '0')}`;
+    setSelectedDay(dStr);
+    setDayLogsLoading(true);
+    try {
+      const res = await sprintApi.getLogsForDay(activeSprint!.id, dStr);
+      setDayLogs(res.data);
+    } finally {
+      setDayLogsLoading(false);
+    }
+  };
+
+  const handleDayLogClick = async (day: number, goalId?: string) => {
+    const dStr = `${currentMonthStr}-${String(day).padStart(2, '0')}`;
+    setSelectedDay(dStr);
+    setPreselectedGoalId(goalId);
+    setShowLogModal(true);
+    setDayLogsLoading(true);
+    try {
+      const res = await sprintApi.getLogsForDay(activeSprint!.id, dStr);
+      setDayLogs(res.data);
+    } finally {
+      setDayLogsLoading(false);
     }
   };
 
@@ -426,11 +500,11 @@ export const SprintDashboard: React.FC = () => {
         matrixData={matrixData}
         monthFocus={monthFocus}
         selectedDay={selectedDay}
-        onDayClick={handleDayClick}
+        onDaySelect={handleDaySelect}
+        onDayLogClick={handleDayLogClick}
+        sprintStartDate={activeSprint.startDate}
+        sprintEndDate={activeSprint.endDate}
       />
-
-      {/* ── Weekly Targets ── */}
-      <WeeklyTargetsPane goals={goals} />
 
       {/* ── Day Detail ── */}
       <DayDetailPanel
@@ -445,9 +519,21 @@ export const SprintDashboard: React.FC = () => {
           setDayLogs(res.data);
           const mRes = await sprintApi.getCalendarMatrix(activeSprint.id, currentMonthStr);
           setMatrixData(mRes.data.matrix);
-        } } onLogUpdated={function (): void {
-          throw new Error('Function not implemented.');
-        } }      />
+        }}
+        onLogUpdated={async () => {
+          const res = await sprintApi.getLogsForDay(activeSprint.id, selectedDay);
+          setDayLogs(res.data);
+          const mRes = await sprintApi.getCalendarMatrix(activeSprint.id, currentMonthStr);
+          setMatrixData(mRes.data.matrix);
+        }}
+        targets={targets}
+        targetsLoading={targetsLoading}
+        onTargetToggle={handleTargetToggle}
+        onTargetDelete={handleTargetDelete}
+        onTargetEditClick={(t) => { setEditingTarget(t); setShowTargetModal(true); }}
+        onTargetMove={handleTargetMove}
+        onAddTargetClick={() => { setEditingTarget(null); setShowTargetModal(true); }}
+      />
 
       {/* ── Time Logger Modal ── */}
       {showLogModal && (
@@ -455,6 +541,7 @@ export const SprintDashboard: React.FC = () => {
           sprintId={activeSprint.id}
           goals={goals}
           preselectedDate={selectedDay}
+          preselectedGoalId={preselectedGoalId}
           onClose={() => setShowLogModal(false)}
           onSuccess={async () => {
             setShowLogModal(false);
@@ -481,11 +568,18 @@ export const SprintDashboard: React.FC = () => {
         <EditSprintModal
           sprint={activeSprint}
           onClose={() => setShowEditSprint(false)}
-          onSaved={updated => {
-            setActiveSprint(updated);
-            setSprints(prev => prev.map(s => s.id === updated.id ? updated : s));
-            setShowEditSprint(false);
-          }}
+          onSaved={async (_s) => { setShowEditSprint(false); await initialize(); }}
+        />
+      )}
+
+      {/* ── Target Modal ── */}
+      {showTargetModal && (
+        <TargetModal
+          goals={goals}
+          target={editingTarget}
+          preselectedDate={selectedDay}
+          onClose={() => { setShowTargetModal(false); setEditingTarget(null); }}
+          onSuccess={() => { setShowTargetModal(false); setEditingTarget(null); loadTargets(); }}
         />
       )}
 

@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: 'https://backend-autumn-ember-2113.fly.dev/api/v1',
-  // baseURL: 'http://localhost:8080/api/v1'
+  // baseURL: 'https://backend-autumn-ember-2113.fly.dev/api/v1',
+  baseURL: 'http://localhost:8080/api/v1'
 });
 
 export interface Tag {

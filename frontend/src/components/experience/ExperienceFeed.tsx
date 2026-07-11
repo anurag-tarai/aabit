@@ -244,7 +244,7 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
         return (
           <div
             key={entry.id}
-            className="group relative bg-neutral-950 border border-neutral-800/60 rounded-xl px-6 py-5 hover:border-neutral-700 transition-colors shadow-sm"
+            className="group relative bg-neutral-950 border border-neutral-800 rounded-xl px-6 py-5 hover:border-neutral-700 transition-colors shadow-sm"
           >
             {/* Timestamp + actions row */}
             <div className="flex items-center justify-between mb-4">
@@ -308,7 +308,7 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
                       {!filteredEditTags.find(t => t.name.toLowerCase() === editTagInput.toLowerCase().trim()) && !editSelectedTags.includes(editTagInput.toLowerCase().trim()) && (
                         <button type="button"
                           onClick={() => { const c = editTagInput.trim().toLowerCase(); if (c && !editSelectedTags.includes(c)) setEditSelectedTags([...editSelectedTags, c]); setEditTagInput(''); setShowEditDropdown(false); }}
-                          className="w-full text-left px-3 py-2 text-sm text-blue-400 hover:bg-neutral-800 transition-colors border-t border-neutral-700/30">
+                          className="w-full text-left px-3 py-2 text-sm text-blue-400 hover:bg-neutral-800 transition-colors border-t border-neutral-700">
                           Create: #{editTagInput.toLowerCase().trim()}
                         </button>
                       )}

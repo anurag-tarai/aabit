@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Settings as SettingsIcon, Type, ShieldCheck, LogOut } from 'lucide-react';
 import { useFontSize } from './FontSizeContext';
+import { useTheme, type Theme } from './ThemeContext';
 import { vault } from '../../utils/vaultCrypto';
 import { api } from '../../api/client';
 import { RegeneratePhraseCard } from './RegeneratePhraseCard';
@@ -9,8 +10,8 @@ import { RegeneratePhraseCard } from './RegeneratePhraseCard';
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({
   title, icon, children,
 }) => (
-  <div className="border border-neutral-800/80 bg-neutral-950 rounded-2xl overflow-hidden">
-    <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-neutral-800/60">
+  <div className="border border-neutral-800 bg-neutral-950 rounded-2xl overflow-hidden">
+    <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-neutral-800">
       <span className="text-neutral-500">{icon}</span>
       <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-neutral-500">{title}</span>
     </div>
@@ -31,12 +32,37 @@ const Row: React.FC<{ label: string; sub?: string; right: React.ReactNode }> = (
   </div>
 );
 
+// ─── Theme Selector ───────────────────────────────────────────────────────────
+const ThemeSelector: React.FC = () => {
+  const { theme, setTheme } = useTheme();
+  
+  const themes: { value: Theme, label: string }[] = [
+    { value: 'default', label: 'Stark Dark' },
+    { value: 'matte-teal', label: 'Matte Teal' },
+    { value: 'matte-charcoal', label: 'Matte Charcoal' },
+    { value: 'midnight-purple', label: 'Midnight Purple' },
+    { value: 'light-classic', label: 'Classic Light' },
+  ];
+
+  return (
+    <select
+      value={theme}
+      onChange={(e) => setTheme(e.target.value as Theme)}
+      className="bg-neutral-950 border border-neutral-800 text-neutral-300 rounded-lg px-3 py-1.5 text-sm outline-none hover:border-neutral-600 transition-colors cursor-pointer"
+    >
+      {themes.map(t => (
+        <option key={t.value} value={t.value}>{t.label}</option>
+      ))}
+    </select>
+  );
+};
+
 // ─── Font size stepper ────────────────────────────────────────────────────────
 const FontStepper: React.FC = () => {
   const { fontSize, increaseFontSize, decreaseFontSize } = useFontSize();
-  const sizes = ['sm', 'base', 'lg', 'xl'];
+  const sizes = ['sm', 'base', 'lg', 'xl', '2xl', '3xl'];
   const idx   = sizes.indexOf(fontSize);
-  const labels: Record<string, string> = { sm: 'Small', base: 'Default', lg: 'Large', xl: 'X-Large' };
+  const labels: Record<string, string> = { sm: 'Small', base: 'Default', lg: 'Large', xl: 'X-Large', '2xl': '2X-Large', '3xl': '3X-Large' };
 
   return (
     <div className="flex items-center gap-2">
@@ -88,6 +114,12 @@ export const Settings: React.FC = () => {
 
       {/* ── Appearance ───────────────────────────────────────────────────────── */}
       <Section title="Appearance" icon={<Type size={13} />}>
+        <Row
+          label="Color Theme"
+          sub="Choose your preferred color palette"
+          right={<ThemeSelector />}
+        />
+        <div className="border-t border-neutral-800 my-1" />
         <Row
           label="Text size"
           sub="Scales all text across the app"
