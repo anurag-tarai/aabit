@@ -440,7 +440,7 @@ export const SprintDashboard: React.FC = () => {
             </button>
           </div>
 
-          <div className={`${showMobileMenu ? 'flex' : 'hidden'} md:flex flex-col md:flex-row items-end md:items-center gap-3 md:gap-4 mt-2 md:mt-0`}>
+          <div className={`${showMobileMenu ? 'flex' : 'hidden'} md:flex flex-row flex-wrap justify-end items-center gap-3 md:gap-4 mt-3 md:mt-0 animate-in fade-in slide-in-from-top-2 duration-200`}>
             <div className="relative">
               <button onClick={() => setShowSprintList(v => !v)} className="flex items-center gap-1 border border-neutral-800 hover:border-neutral-600 rounded px-2 py-1 text-xs text-neutral-400 hover:text-neutral-200 transition-colors font-mono">
                 <List size={14} /> SPRINTS
