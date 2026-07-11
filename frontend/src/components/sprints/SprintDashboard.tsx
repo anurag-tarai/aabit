@@ -1,3 +1,4 @@
+import { showErrorToast } from '../../utils/toast';
 import React, { useState, useEffect, useCallback } from 'react';
 import { sprintApi, type Sprint, type Goal, type MatrixCell, type TimeLog } from '../../api/sprintClient';
 import { TimeLoggerModal } from './TimeLoggerModal';
@@ -87,17 +88,16 @@ const EditSprintModal: React.FC<EditSprintModalProps> = ({ sprint, onClose, onSa
   const [startDate, setStartDate] = useState(sprint.startDate);
   const [endDate, setEndDate] = useState(sprint.endDate);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setLoading(true);
     try {
       const res = await sprintApi.updateSprint(sprint.id, { name, startDate, endDate });
       onSaved(res.data);
     } catch (err: any) {
-      setError(err.response?.data?.message ?? 'Failed to update sprint.');
+      showErrorToast(err.response?.data?.message ?? 'Failed to update sprint.');
     } finally {
       setLoading(false);
     }
@@ -110,11 +110,7 @@ const EditSprintModal: React.FC<EditSprintModalProps> = ({ sprint, onClose, onSa
           <span className="font-bold tracking-widest">EDIT SPRINT</span>
           <button onClick={onClose} className="text-neutral-500 hover:text-white"><X size={16} /></button>
         </div>
-        {error && (
-          <div className="text-red-400 text-xs bg-red-950/30 p-2 rounded border border-red-900/50">
-            {error}
-          </div>
-        )}
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           <label className="flex flex-col gap-1 text-xs text-neutral-500 uppercase">
             Name

@@ -1,3 +1,4 @@
+import { showErrorToast } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
 import { sprintApi, type Goal } from '../../api/sprintClient';
 import { Plus, X, ChevronDown, ChevronRight, Pencil, Trash2, Check } from 'lucide-react';
@@ -55,7 +56,7 @@ export const GoalArchitect: React.FC<GoalArchitectProps> = ({ sprintId, activeGo
   const [newAreaName, setNewAreaName] = useState('');
   const [areaLoading, setAreaLoading] = useState(false);
 
-  const [error, setError] = useState<string | null>(null);
+  
 
   const refreshGoals = async () => {
     const res = await sprintApi.getAllGoals();
@@ -90,7 +91,6 @@ export const GoalArchitect: React.FC<GoalArchitectProps> = ({ sprintId, activeGo
   const handleSaveAllocations = async () => {
     if (!is100Percent) return;
     setAllocationsLoading(true);
-    setError(null);
     try {
       // Find which ones changed
       const updates = activeGoals
@@ -107,7 +107,7 @@ export const GoalArchitect: React.FC<GoalArchitectProps> = ({ sprintId, activeGo
         onUpdate();
       }
     } catch {
-      setError('Failed to save allocations.');
+      showErrorToast('Failed to save allocations.');
     } finally {
       setAllocationsLoading(false);
     }
@@ -117,7 +117,6 @@ export const GoalArchitect: React.FC<GoalArchitectProps> = ({ sprintId, activeGo
     e.preventDefault();
     if (!newGoalName.trim()) return;
     setGoalLoading(true);
-    setError(null);
     try {
       await sprintApi.createGoal({
         name: newGoalName.trim(),
@@ -127,7 +126,7 @@ export const GoalArchitect: React.FC<GoalArchitectProps> = ({ sprintId, activeGo
       setNewGoalName('');
       setNewGoalPercentage(0);
       await refreshGoals();
-    } catch { setError('Failed to create goal.'); }
+    } catch { showErrorToast('Failed to create goal.'); }
     finally { setGoalLoading(false); }
   };
 
@@ -139,7 +138,6 @@ export const GoalArchitect: React.FC<GoalArchitectProps> = ({ sprintId, activeGo
 
   const handleSaveEditGoal = async (goalId: string) => {
     setEditGoalLoading(true);
-    setError(null);
     try {
       await sprintApi.updateGoal(goalId, {
         name: editGoalName.trim(),
@@ -149,19 +147,18 @@ export const GoalArchitect: React.FC<GoalArchitectProps> = ({ sprintId, activeGo
       setEditingGoalId(null);
       await refreshGoals();
       onUpdate(); // refresh sprint goals too (color/name change)
-    } catch { setError('Failed to update goal.'); }
+    } catch { showErrorToast('Failed to update goal.'); }
     finally { setEditGoalLoading(false); }
   };
 
   const handleDeleteGoal = async (goalId: string) => {
-    setError(null);
     try {
       await sprintApi.deleteGoal(goalId);
       setConfirmDeleteGoalId(null);
       setExpandedGoalId(null);
       await refreshGoals();
       onUpdate();
-    } catch { setError('Failed to delete goal.'); }
+    } catch { showErrorToast('Failed to delete goal.'); }
   };
 
   const handleStartEditWorkArea = (wa: any) => {
@@ -172,57 +169,49 @@ export const GoalArchitect: React.FC<GoalArchitectProps> = ({ sprintId, activeGo
   const handleSaveEditWorkArea = async (goalId: string, workAreaId: string) => {
     if (!editWorkAreaName.trim()) return;
     setEditWorkAreaLoading(true);
-    setError(null);
     try {
       await sprintApi.updateWorkArea(goalId, workAreaId, { name: editWorkAreaName.trim() });
       setEditingWorkAreaId(null);
       await refreshGoals();
-    } catch { setError('Failed to update work area.'); }
+    } catch { showErrorToast('Failed to update work area.'); }
     finally { setEditWorkAreaLoading(false); }
   };
 
   const handleDeleteWorkArea = async (goalId: string, workAreaId: string) => {
-    setError(null);
     try {
       await sprintApi.deleteWorkArea(goalId, workAreaId);
       setConfirmDeleteWorkAreaId(null);
       await refreshGoals();
-    } catch { setError('Failed to delete work area.'); }
+    } catch { showErrorToast('Failed to delete work area.'); }
   };
 
   const handleCreateArea = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedGoalForArea || !newAreaName.trim()) return;
     setAreaLoading(true);
-    setError(null);
     try {
       await sprintApi.createWorkArea(selectedGoalForArea, { name: newAreaName.trim() });
       setNewAreaName('');
       await refreshGoals();
-    } catch { setError('Failed to create work area.'); }
+    } catch { showErrorToast('Failed to create work area.'); }
     finally { setAreaLoading(false); }
   };
 
   const handleAssign = async (goalId: string) => {
     try { await sprintApi.assignGoalToSprint(sprintId, goalId); onUpdate(); }
-    catch { setError('Failed to assign goal to sprint.'); }
+    catch { showErrorToast('Failed to assign goal to sprint.'); }
   };
 
   const handleRemove = async (goalId: string) => {
     try { await sprintApi.removeGoalFromSprint(sprintId, goalId); onUpdate(); }
-    catch { setError('Failed to remove goal from sprint.'); }
+    catch { showErrorToast('Failed to remove goal from sprint.'); }
   };
 
   const isActive = (goalId: string) => activeGoals.some(g => g.id === goalId);
 
   return (
     <div className="bg-[#0a0a0a] border border-neutral-800 rounded p-4 font-mono text-xs flex flex-col gap-5 animate-in fade-in">
-      {error && (
-        <div className="text-red-400 bg-red-950/20 border border-red-900/40 px-3 py-2 rounded text-xs flex justify-between items-center">
-          <span>{error}</span>
-          <button onClick={() => setError(null)} className="text-red-600 hover:text-red-400"><X size={14}/></button>
-        </div>
-      )}
+
 
       {/* ── 0. Sprint Time Allocation ── */}
       <div className="bg-neutral-950 p-4 border border-neutral-900 rounded flex flex-col gap-3">

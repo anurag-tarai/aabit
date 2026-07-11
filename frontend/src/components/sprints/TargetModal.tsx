@@ -1,3 +1,4 @@
+import { showErrorToast } from '../../utils/toast';
 import React, { useState } from 'react';
 import { sprintApi, type Target, type Goal, getMondayFromDate } from '../../api/sprintClient';
 import { X } from 'lucide-react';
@@ -26,7 +27,7 @@ export const TargetModal: React.FC<TargetModalProps> = ({
   const [selectedWorkAreaId, setSelectedWorkAreaId] = useState(target?.workAreaId || '');
   const [priority, setPriority] = useState<'HIGHEST' | 'MEDIUM' | 'LOW'>(target?.priority || 'MEDIUM');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  
 
   const selectedGoal = goals.find(g => g.id === selectedGoalId);
   const workAreas = selectedGoal?.workAreas ?? [];
@@ -39,16 +40,15 @@ export const TargetModal: React.FC<TargetModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      setError('Name is required.');
+      showErrorToast('Name is required.');
       return;
     }
     if (!targetDate) {
-      setError('Date is required.');
+      showErrorToast('Date is required.');
       return;
     }
 
     setLoading(true);
-    setError(null);
     try {
       const payload = {
         name: name.trim(),
@@ -68,7 +68,7 @@ export const TargetModal: React.FC<TargetModalProps> = ({
       }
       onSuccess();
     } catch (err: any) {
-      setError(err.response?.data?.message ?? 'Failed to update target.');
+      showErrorToast(err.response?.data?.message ?? 'Failed to update target.');
     } finally {
       setLoading(false);
     }
@@ -87,9 +87,7 @@ export const TargetModal: React.FC<TargetModalProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="px-4 pb-4 pt-3 flex flex-col gap-3 text-xs">
-          {error && (
-            <div className="text-red-400 p-2 rounded border border-red-900/40 bg-red-950/20">{error}</div>
-          )}
+
 
           {/* Name */}
           <div className="flex flex-col gap-1">

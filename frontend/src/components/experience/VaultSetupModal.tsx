@@ -1,3 +1,4 @@
+import { showErrorToast } from '../../utils/toast';
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ShieldCheck, Eye, EyeOff, Copy, Check, Loader2, AlertTriangle } from "lucide-react";
@@ -25,7 +26,7 @@ export const VaultSetupModal = ({ onComplete }: Props) => {
   const [phrase, setPhrase] = useState("");
   const [copied, setCopied] = useState(false);
   const [phraseAcked, setPhraseAcked] = useState(false);
-  const [error, setError] = useState("");
+  
   const [migrationMsg, setMigrationMsg] = useState("");
 
   // ── UI Frontend Validation Rules ──
@@ -38,18 +39,17 @@ export const VaultSetupModal = ({ onComplete }: Props) => {
 
   const handlePinNext = () => {
     if (hasWhitespace) {
-      setError("Whitespaces/spaces are strictly prohibited in security keys.");
+      showErrorToast("Whitespaces/spaces are strictly prohibited in security keys.");
       return;
     }
     if (pin.length < 4) {
-      setError("PIN must be at least 4 characters.");
+      showErrorToast("PIN must be at least 4 characters.");
       return;
     }
     if (pin !== pinConfirm) {
-      setError("PINs do not match.");
+      showErrorToast("PINs do not match.");
       return;
     }
-    setError("");
     setPhrase(generateRecoveryPhrase());
     setStep("PHRASE");
   };
@@ -62,10 +62,9 @@ export const VaultSetupModal = ({ onComplete }: Props) => {
 
   const handleFinalize = async () => {
     if (!phraseAcked) {
-      setError("Please confirm you have saved your recovery phrase.");
+      showErrorToast("Please confirm you have saved your recovery phrase.");
       return;
     }
-    setError("");
     setStep("SAVING");
     try {
       const masterKey = await generateMasterKey();
@@ -91,9 +90,9 @@ export const VaultSetupModal = ({ onComplete }: Props) => {
     } catch (err: any) {
       console.error("Vault setup failed:", err);
       if (err.response && err.response.data && err.response.data.message) {
-        setError(err.response.data.message);
+        showErrorToast(err.response.data.message);
       } else {
-        setError("Setup failed — system execution context interrupted.");
+        showErrorToast("Setup failed — system execution context interrupted.");
       }
       setStep("PHRASE");
     }
@@ -184,7 +183,7 @@ export const VaultSetupModal = ({ onComplete }: Props) => {
               </div>
             )}
 
-            {error && !hasWhitespace && !pinMismatchError && <p className="text-xs text-red-400 font-mono">{error}</p>}
+
             
             <button 
               onClick={handlePinNext}
@@ -215,7 +214,7 @@ export const VaultSetupModal = ({ onComplete }: Props) => {
                 I have saved my recovery phrase. I understand losing it means permanent data loss if I also forget my PIN.
               </span>
             </label>
-            {error && <p className="text-xs text-red-400 font-mono">{error}</p>}
+
             <button 
               onClick={handleFinalize}
               disabled={!phraseAcked}

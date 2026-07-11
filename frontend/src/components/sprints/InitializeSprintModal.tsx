@@ -1,3 +1,4 @@
+import { showErrorToast } from '../../utils/toast';
 import React, { useState } from 'react';
 import { sprintApi } from '../../api/sprintClient';
 import { X, Calendar } from 'lucide-react';
@@ -12,17 +13,16 @@ export const InitializeSprintModal: React.FC<InitializeSprintModalProps> = ({ on
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setLoading(true);
     try {
       await sprintApi.createSprint({ name, startDate, endDate });
       onSuccess();
     } catch (err: any) {
-      setError(err.response?.data?.message ?? 'Failed to create sprint. Period may overlap an existing one.');
+      showErrorToast(err.response?.data?.message ?? 'Failed to create sprint. Period may overlap an existing one.');
     } finally {
       setLoading(false);
     }
@@ -41,9 +41,7 @@ export const InitializeSprintModal: React.FC<InitializeSprintModalProps> = ({ on
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 text-xs">
-          {error && (
-            <div className="text-red-400 text-xs bg-red-950/30 p-2 rounded border border-red-900/40">{error}</div>
-          )}
+
 
           <div className="flex flex-col gap-1">
             <label className="text-[10px] text-neutral-600 uppercase font-bold">Name</label>

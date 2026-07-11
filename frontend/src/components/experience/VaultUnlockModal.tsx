@@ -1,3 +1,4 @@
+import { showErrorToast } from '../../utils/toast';
 import { useState, useEffect } from "react";
 import { Lock, Eye, EyeOff, RotateCcw, Loader2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Link } from 'react-router-dom';
@@ -25,7 +26,7 @@ export const VaultUnlockModal = ({ onUnlocked }: Props) => {
   const [showSecret, setShowSecret] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
-  const [error, setError] = useState("");
+  
   const [successMsg, setSuccessMsg] = useState("");
 
   // Fetch the wrapped envelopes from the server on mount
@@ -34,7 +35,7 @@ export const VaultUnlockModal = ({ onUnlocked }: Props) => {
       .get<VaultMetadata>("/user/vault-metadata")
       .then((res) => setMetadata(res.data))
       .catch(() =>
-        setError("Failed to load vault metadata. Check your connection."),
+        showErrorToast("Failed to load vault metadata. Check your connection."),
       )
       .finally(() => setFetching(false));
   }, []);
@@ -61,14 +62,12 @@ export const VaultUnlockModal = ({ onUnlocked }: Props) => {
     setSecret("");
     setNewPin("");
     setNewPinConfirm("");
-    setError("");
     setSuccessMsg("");
   };
 
   const handleUnlock = async () => {
     if (isFormInvalid || !metadata) return;
     setLoading(true);
-    setError("");
     setSuccessMsg("");
 
     try {
@@ -109,7 +108,7 @@ export const VaultUnlockModal = ({ onUnlocked }: Props) => {
     } catch (err) {
       console.error("Vault unlock failed:", err);
       setSuccessMsg("");
-      setError(
+      showErrorToast(
         mode === "PIN"
           ? "Incorrect PIN. Your vault remains locked."
           : "Incorrect recovery phrase. Check every word carefully.",
@@ -231,7 +230,7 @@ export const VaultUnlockModal = ({ onUnlocked }: Props) => {
               </div>
             )}
 
-            {error && !hasWhitespaceError && !pinMismatchError && <p className="text-xs text-red-400 font-mono">{error}</p>}
+
 
             <button
               onClick={handleUnlock}

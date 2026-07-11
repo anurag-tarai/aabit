@@ -1,7 +1,8 @@
+import { showErrorToast } from '../../utils/toast';
 import React, { useState, useEffect, useCallback } from 'react';
 import { sprintApi, type Sprint, type Goal, type MatrixCell, type Target, type LifetimeSummaryCell, getCurrentWeekMonday } from '../../api/sprintClient';
 import { TimeInvestmentBreakdown } from './TimeInvestmentBreakdown';
-import { BarChart2, Target as TargetIcon, Clock, TrendingUp, Layers, AlertCircle } from 'lucide-react';
+import { BarChart2, Target as TargetIcon, Clock, TrendingUp, Layers } from 'lucide-react';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -66,7 +67,7 @@ export const SprintVisualizer: React.FC = () => {
   const [matrix, setMatrix]         = useState<MatrixCell[]>([]);
   const [targets, setTargets]       = useState<Target[]>([]);
   const [loading, setLoading]       = useState(true);
-  const [error, setError]           = useState<string | null>(null);
+  
   const [lifetimeSummary, setLifetimeSummary] = useState<LifetimeSummaryCell[]>([]);
 
   // Load all sprints on mount
@@ -80,14 +81,13 @@ export const SprintVisualizer: React.FC = () => {
       } else {
         setLoading(false);
       }
-    }).catch(() => { setError('Failed to load sprints.'); setLoading(false); });
+    }).catch(() => { showErrorToast('Failed to load sprints.'); setLoading(false); });
   }, []);
 
   // Load data whenever selected sprint changes
   const loadSprintData = useCallback(async (sprintId: string) => {
     if (!sprintId) return;
     setLoading(true);
-    setError(null);
     try {
       const sprint = sprints.find(s => s.id === sprintId)!;
 
@@ -114,7 +114,7 @@ export const SprintVisualizer: React.FC = () => {
       setTargets(targetsRes.data);
       setLifetimeSummary(lifetimeRes.data.summary);
     } catch {
-      setError('Failed to load sprint data.');
+      showErrorToast('Failed to load sprint data.');
     } finally {
       setLoading(false);
     }
@@ -197,11 +197,7 @@ export const SprintVisualizer: React.FC = () => {
         </select>
       </div>
 
-      {error && (
-        <div className="flex items-center gap-2 text-red-400 text-xs font-mono bg-red-950/20 border border-red-900/30 rounded-xl px-4 py-3">
-          <AlertCircle size={13} /> {error}
-        </div>
-      )}
+
 
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -396,7 +392,7 @@ export const SprintVisualizer: React.FC = () => {
       )}
 
       {/* ── Time Investment Tracker ────────────────────────────────────────── */}
-      {!loading && !error && sprints.length > 0 && (
+      {!loading && sprints.length > 0 && (
         <TimeInvestmentBreakdown
           goals={goals}
           matrixData={matrix}

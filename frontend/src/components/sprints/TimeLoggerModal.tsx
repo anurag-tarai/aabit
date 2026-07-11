@@ -1,3 +1,4 @@
+import { showErrorToast } from '../../utils/toast';
 import React, { useState, useEffect } from 'react';
 import { sprintApi, type Goal, type TimeLog } from '../../api/sprintClient';
 import { Clock, Send, X, Tag, Pencil } from 'lucide-react';
@@ -59,7 +60,7 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
   const [endTime, setEndTime] = useState(editingLog ? isoToHHMM(editingLog.endTime) : '');
   const [note, setNote] = useState(editingLog?.note ?? '');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  
 
   // Clock picker popups state
   const [clockPickerTarget, setClockPickerTarget] = useState<'start' | 'end' | null>(null);
@@ -74,7 +75,6 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setLoading(true);
     try {
       const startDate = new Date(`${preselectedDate}T${startTime}:00`);
@@ -119,7 +119,7 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
       }
       onSuccess();
     } catch (err: any) {
-      setError(err.response?.data?.message ?? 'Failed to save log. Time may overlap an existing entry.');
+      showErrorToast(err.response?.data?.message ?? 'Failed to save log. Time may overlap an existing entry.');
     } finally {
       setLoading(false);
     }
@@ -188,11 +188,7 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
           </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3 text-sm">
-            {error && (
-              <div className="text-red-400 text-xs bg-red-950/30 p-2 rounded border border-red-900/40">
-                {error}
-              </div>
-            )}
+
 
             {mode === 'goal' ? (
               <>
