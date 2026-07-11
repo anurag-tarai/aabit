@@ -177,20 +177,23 @@ export const SprintVisualizer: React.FC = () => {
           <BarChart2 size={18} className="text-emerald-500" />
           <div>
             <h1 className="text-base font-bold text-white tracking-tight">Sprint Visualizer</h1>
-            <p className="text-[11px] text-neutral-600 font-mono mt-0.5">Progress overview and time allocation</p>
           </div>
         </div>
         {/* Sprint selector */}
         <select
           value={selectedId}
           onChange={e => setSelectedId(e.target.value)}
-          className="bg-neutral-900 border border-neutral-800 text-neutral-300 text-xs font-mono px-3 py-1.5 rounded-lg outline-none focus:border-emerald-700"
+          className="bg-neutral-900 border border-neutral-800 text-neutral-300 text-xs font-mono px-3 py-1.5 rounded-lg outline-none focus:border-emerald-700 max-w-[220px]"
         >
-          {sprints.map(s => (
-            <option key={s.id} value={s.id}>
-              {s.name} {s.status === 'ACTIVE' ? '● ACTIVE' : ''}
-            </option>
-          ))}
+          {sprints.map(s => {
+            const label = `${s.name} ${s.status === 'ACTIVE' ? '● ACTIVE' : ''}`;
+            const truncated = label.length > 25 ? label.substring(0, 25) + '....' : label;
+            return (
+              <option key={s.id} value={s.id}>
+                {truncated}
+              </option>
+            );
+          })}
         </select>
       </div>
 
