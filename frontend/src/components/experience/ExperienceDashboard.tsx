@@ -154,7 +154,7 @@ export const ExperienceDashboard = () => {
   }
 
  return (
-    <div className="flex flex-col gap-6 w-full max-w-3xl mx-auto" onClick={e => e.stopPropagation()}>
+    <div className="flex flex-col gap-6 w-full max-w-5xl mx-auto" onClick={e => e.stopPropagation()}>
 
       {/* ── Page header — clean, no terminal noise ── */}
       <div className="flex items-start justify-between pt-2">

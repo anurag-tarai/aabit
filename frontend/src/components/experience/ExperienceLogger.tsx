@@ -102,7 +102,7 @@ export const ExperienceLogger = ({
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="What happened? What did you learn?"
-        className={`w-full h-40 p-3 bg-os-bg border border-os-border rounded-lg text-os-text focus:ring-1 focus:ring-gray-500 outline-none resize-none transition-all ${
+        className={`w-full min-h-[250px] p-3 bg-os-bg border border-os-border rounded-lg text-os-text focus:ring-1 focus:ring-gray-500 outline-none resize-y transition-all ${
           isSensitive ? "blur-[3px] focus:blur-none hover:blur-none" : ""
         }`}
       />
