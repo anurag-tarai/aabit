@@ -79,7 +79,7 @@ export const TargetModal: React.FC<TargetModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-[#0a0a0a] border border-neutral-800 rounded-lg max-w-sm w-full font-mono text-sm shadow-2xl overflow-hidden animate-in zoom-in duration-150">
+      <div className="bg-[#0a0a0a] border border-neutral-800 rounded-lg max-w-sm w-full font-mono text-sm shadow-2xl animate-in zoom-in duration-150">
         
         {/* Header */}
         <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-neutral-900">
