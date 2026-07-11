@@ -229,7 +229,7 @@ export const ExperienceFeed: React.FC<ExperienceFeedProps> = ({
                   id={`edit-textarea-${entry.id}`}
                   value={editContent}
                   onChange={e => setEditContent(e.target.value)}
-                  className={`w-full h-40 p-4 bg-neutral-900 border border-neutral-700 rounded-lg text-neutral-200 outline-none resize-none text-sm leading-relaxed focus:border-neutral-500 transition-colors ${editIsSensitive ? 'blur-[3px] focus:blur-none hover:blur-none' : ''}`}
+                  className={`w-full h-[50vh] md:h-40 min-h-[160px] p-4 bg-neutral-900 border border-neutral-700 rounded-lg text-neutral-200 outline-none resize-y text-sm leading-relaxed focus:border-neutral-500 transition-colors ${editIsSensitive ? 'blur-[3px] focus:blur-none hover:blur-none' : ''}`}
                 />
                 {editLocation && (
                   <p className="text-[11px] text-emerald-500 bg-emerald-950/20 border border-emerald-900/30 rounded-lg p-2">
