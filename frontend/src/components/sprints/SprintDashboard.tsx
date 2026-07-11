@@ -1,4 +1,5 @@
 import { CustomInput } from '../common/CustomInput';
+import { CustomDatePicker } from '../common/CustomDatePicker';
 import { showErrorToast } from '../../utils/toast';
 import React, { useState, useEffect, useCallback } from 'react';
 import { sprintApi, type Sprint, type Goal, type MatrixCell, type TimeLog } from '../../api/sprintClient';
@@ -125,13 +126,11 @@ const EditSprintModal: React.FC<EditSprintModalProps> = ({ sprint, onClose, onSa
           </label>
           <label className="flex flex-col gap-1 text-xs text-neutral-500 uppercase">
             Start
-            <CustomInput required type="date" value={startDate} onChange={e => setStartDate(e.target.value)}
-              className="bg-neutral-900 border border-neutral-800 text-neutral-300 p-2 rounded outline-none focus:border-emerald-600" />
+            <CustomDatePicker required value={startDate} onChange={setStartDate} />
           </label>
           <label className="flex flex-col gap-1 text-xs text-neutral-500 uppercase">
             End
-            <CustomInput required type="date" value={endDate} onChange={e => setEndDate(e.target.value)}
-              className="bg-neutral-900 border border-neutral-800 text-neutral-300 p-2 rounded outline-none focus:border-emerald-600" />
+            <CustomDatePicker required value={endDate} onChange={setEndDate} />
           </label>
           <button
             type="submit"

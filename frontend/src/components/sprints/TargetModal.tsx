@@ -2,6 +2,7 @@ import { showErrorToast } from '../../utils/toast';
 import React, { useState } from 'react';
 import { sprintApi, type Target, type Goal, getMondayFromDate } from '../../api/sprintClient';
 import { CustomInput } from '../common/CustomInput';
+import { CustomDatePicker } from '../common/CustomDatePicker';
 import { CustomSelect } from '../common/CustomSelect';
 import { X } from 'lucide-react';
 
@@ -137,12 +138,10 @@ export const TargetModal: React.FC<TargetModalProps> = ({
             <label className="text-[9px] text-neutral-500 uppercase font-bold">
               Target Date (Move target) *
             </label>
-            <CustomInput
+            <CustomDatePicker
               required
-              type="date"
               value={targetDate}
-              onChange={e => setTargetDate(e.target.value)}
-              className="bg-neutral-900 border border-neutral-800 text-neutral-300 p-2 rounded outline-none focus:border-emerald-600 font-mono text-xs"
+              onChange={setTargetDate}
             />
           </div>
 

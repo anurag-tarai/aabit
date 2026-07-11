@@ -1,4 +1,5 @@
 import { CustomInput } from '../common/CustomInput';
+import { CustomDatePicker } from '../common/CustomDatePicker';
 import { showErrorToast } from '../../utils/toast';
 import React, { useState } from 'react';
 import { sprintApi } from '../../api/sprintClient';
@@ -58,23 +59,21 @@ export const InitializeSprintModal: React.FC<InitializeSprintModalProps> = ({ on
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-neutral-600 uppercase font-bold">Start Date</label>
-              <CustomInput
+              <label className="text-[9px] text-neutral-500 uppercase font-bold text-center">Start Date</label>
+              <CustomDatePicker
                 required
-                type="date"
                 value={startDate}
-                onChange={e => setStartDate(e.target.value)}
-                className="bg-neutral-900 border border-neutral-800 text-neutral-300 p-2 rounded outline-none focus:border-emerald-600"
+                onChange={setStartDate}
+                className="w-32"
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] text-neutral-600 uppercase font-bold">End Date</label>
-              <CustomInput
+              <label className="text-[9px] text-neutral-500 uppercase font-bold text-center">End Date</label>
+              <CustomDatePicker
                 required
-                type="date"
                 value={endDate}
-                onChange={e => setEndDate(e.target.value)}
-                className="bg-neutral-900 border border-neutral-800 text-neutral-300 p-2 rounded outline-none focus:border-emerald-600"
+                onChange={setEndDate}
+                className="w-32"
               />
             </div>
           </div>
