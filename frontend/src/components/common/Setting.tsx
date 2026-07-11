@@ -11,7 +11,7 @@ import { RegeneratePhraseCard } from './RegeneratePhraseCard';
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({
   title, icon, children,
 }) => (
-  <div className="border border-neutral-800 bg-neutral-950 rounded-2xl overflow-hidden">
+  <div className="border border-neutral-800 bg-neutral-950 rounded-2xl">
     <div className="flex items-center gap-2.5 px-5 py-3.5 border-b border-neutral-800">
       <span className="text-neutral-500">{icon}</span>
       <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-neutral-500">{title}</span>
