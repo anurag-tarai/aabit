@@ -62,7 +62,7 @@ export const RegeneratePhraseCard = () => {
           <ShieldAlert size={13} /> Lost Recovery Phrase?
         </h4>
         <p className="text-neutral-500 text-[10px] mt-1">
-          If you know your current PIN, you can overwrite your lost recovery words by generating a fresh backup sequence.
+          Generate a new recovery phrase using your PIN.
         </p>
       </div>
 
@@ -95,7 +95,7 @@ export const RegeneratePhraseCard = () => {
               DONE
             </button>
           </div>
-          {success && <p className="text-[10px] text-green-400 font-bold mt-1">✓ New backup phrase securely synchronized to the backend server cloud.</p>}
+          {success && <p className="text-[10px] text-green-400 font-bold mt-1">✓ Saved</p>}
         </div>
       )}
     </div>
