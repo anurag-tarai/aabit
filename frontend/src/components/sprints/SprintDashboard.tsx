@@ -9,7 +9,7 @@ import { TargetModal } from './TargetModal';
 import { getMondayFromDate } from '../../api/sprintClient';
 import {
   Activity, AlertTriangle, ChevronLeft, ChevronRight,
-  List, Plus, Pencil, Trash2, CheckCircle, X,
+  List, Plus, Pencil, Trash2, CheckCircle, X, Menu
 } from 'lucide-react';
 
 // ─── Live Clock ───────────────────────────────────────────────────────────────
@@ -161,6 +161,7 @@ export const SprintDashboard: React.FC = () => {
   const [showCreateSprint, setShowCreateSprint] = useState(false);
   const [showEditSprint, setShowEditSprint] = useState(false);
   const [showGoalArchitect, setShowGoalArchitect] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
   
   // Confirm dialogs
   const [confirmDelete, setConfirmDelete] = useState<{ type: 'sprint'; id: string; name: string } | null>(null);
@@ -419,68 +420,78 @@ export const SprintDashboard: React.FC = () => {
           </span>
         </div>
 
-        <div className="flex items-center gap-4">
-          <LiveClock />
-          
-          <div className="flex items-center gap-2">
-            <button onClick={() => setMonthIndex(i => Math.max(0, i - 1))} disabled={monthIndex === 0} className="hover:text-emerald-400 p-0.5 transition-colors disabled:opacity-30 text-neutral-500">
-              <ChevronLeft size={16} />
-            </button>
-            <span className="text-sm font-mono font-bold text-neutral-300 w-24 text-center">
-              {monthFocus.toLocaleString('default', { month: 'short', year: 'numeric' }).toUpperCase()}
-            </span>
-            <button onClick={() => setMonthIndex(i => Math.min(sprintMonths.length - 1, i + 1))} disabled={monthIndex === sprintMonths.length - 1} className="hover:text-emerald-400 p-0.5 transition-colors disabled:opacity-30 text-neutral-500">
-              <ChevronRight size={16} />
+        <div className="flex flex-col items-end gap-2 md:flex-row md:items-center md:gap-4">
+          <div className="flex items-center justify-between w-full md:w-auto gap-4">
+            <div className="flex items-center gap-4">
+              <LiveClock />
+              
+              <div className="flex items-center gap-2">
+                <button onClick={() => setMonthIndex(i => Math.max(0, i - 1))} disabled={monthIndex === 0} className="hover:text-emerald-400 p-0.5 transition-colors disabled:opacity-30 text-neutral-500">
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="text-sm font-mono font-bold text-neutral-300 w-24 text-center">
+                  {monthFocus.toLocaleString('default', { month: 'short', year: 'numeric' }).toUpperCase()}
+                </span>
+                <button onClick={() => setMonthIndex(i => Math.min(sprintMonths.length - 1, i + 1))} disabled={monthIndex === sprintMonths.length - 1} className="hover:text-emerald-400 p-0.5 transition-colors disabled:opacity-30 text-neutral-500">
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+
+            <button onClick={() => setShowMobileMenu(v => !v)} className="md:hidden text-neutral-400 hover:text-white transition-colors p-1">
+              <Menu size={18} />
             </button>
           </div>
 
-          <div className="relative">
-            <button onClick={() => setShowSprintList(v => !v)} className="flex items-center gap-1 border border-neutral-800 hover:border-neutral-600 rounded px-2 py-1 text-xs text-neutral-400 hover:text-neutral-200 transition-colors font-mono">
-              <List size={14} /> SPRINTS
-            </button>
-            
-            {showSprintList && (
-              <div className="absolute right-0 top-full mt-2 w-64 bg-[#0a0a0a] border border-neutral-800 rounded shadow-2xl z-20 flex flex-col overflow-hidden font-mono">
-                {sprints.map(s => (
-                  <div key={s.id} className="group flex items-center justify-between border-b border-neutral-800/50">
-                    <button onClick={() => handleSprintSwitch(s)} className={`flex-1 text-left px-3 py-2 text-xs hover:bg-neutral-900 transition-colors ${s.id === activeSprint.id ? 'text-emerald-400' : 'text-neutral-400'}`}>
-                      <div className="font-bold">{s.name}</div>
-                      <div className="text-[10px] opacity-70 mt-0.5">{s.startDate.slice(0, 7)} → {s.endDate.slice(0, 7)}</div>
-                    </button>
-                    <div className="flex">
-                      <button onClick={() => { setShowSprintList(false); setActiveSprint(s); setShowEditSprint(true); }} className="p-2 text-neutral-700 hover:text-emerald-400 transition-colors opacity-0 group-hover:opacity-100" title="Edit sprint">
-                        <Pencil size={12} />
-                      </button>
-                      <button onClick={() => { setShowSprintList(false); setConfirmDelete({ type: 'sprint', id: s.id, name: s.name }); }} className="p-2 text-neutral-700 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100" title="Delete sprint">
-                        <Trash2 size={12} />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-                <button onClick={() => { setShowSprintList(false); setShowCreateSprint(true); }} className="w-full text-left px-3 py-2 text-xs text-neutral-500 hover:text-emerald-400 hover:bg-neutral-900 transition-colors flex items-center gap-1">
-                  <Plus size={12} /> NEW SPRINT
-                </button>
-              </div>
-            )}
-          </div>
-          
-          <div className="flex gap-1 border-l border-neutral-800 pl-4">
-            <button onClick={() => setShowEditSprint(true)} title="Edit current sprint" className="border border-neutral-800 hover:border-neutral-600 rounded p-1.5 text-neutral-500 hover:text-emerald-400 transition-colors">
-              <Pencil size={14} />
-            </button>
-            <button onClick={() => setConfirmDelete({ type: 'sprint', id: activeSprint.id, name: activeSprint.name })} title="Delete current sprint" className="border border-neutral-800 hover:border-red-900 rounded p-1.5 text-neutral-500 hover:text-red-400 transition-colors">
-              <Trash2 size={14} />
-            </button>
-            {activeSprint.status === 'ACTIVE' && (
-              <button onClick={() => setCompleteConfirm(true)} title="Mark sprint complete" className="border border-neutral-800 hover:border-emerald-700 rounded p-1.5 text-neutral-500 hover:text-emerald-400 transition-colors">
-                <CheckCircle size={14} />
+          <div className={`${showMobileMenu ? 'flex' : 'hidden'} md:flex flex-col md:flex-row items-end md:items-center gap-3 md:gap-4 mt-2 md:mt-0`}>
+            <div className="relative">
+              <button onClick={() => setShowSprintList(v => !v)} className="flex items-center gap-1 border border-neutral-800 hover:border-neutral-600 rounded px-2 py-1 text-xs text-neutral-400 hover:text-neutral-200 transition-colors font-mono">
+                <List size={14} /> SPRINTS
               </button>
-            )}
+              
+              {showSprintList && (
+                <div className="absolute right-0 top-full mt-2 w-64 bg-[#0a0a0a] border border-neutral-800 rounded shadow-2xl z-20 flex flex-col overflow-hidden font-mono">
+                  {sprints.map(s => (
+                    <div key={s.id} className="group flex items-center justify-between border-b border-neutral-800/50">
+                      <button onClick={() => handleSprintSwitch(s)} className={`flex-1 text-left px-3 py-2 text-xs hover:bg-neutral-900 transition-colors ${s.id === activeSprint.id ? 'text-emerald-400' : 'text-neutral-400'}`}>
+                        <div className="font-bold">{s.name}</div>
+                        <div className="text-[10px] opacity-70 mt-0.5">{s.startDate.slice(0, 7)} → {s.endDate.slice(0, 7)}</div>
+                      </button>
+                      <div className="flex">
+                        <button onClick={() => { setShowSprintList(false); setActiveSprint(s); setShowEditSprint(true); }} className="p-2 text-neutral-700 hover:text-emerald-400 transition-colors opacity-0 group-hover:opacity-100" title="Edit sprint">
+                          <Pencil size={12} />
+                        </button>
+                        <button onClick={() => { setShowSprintList(false); setConfirmDelete({ type: 'sprint', id: s.id, name: s.name }); }} className="p-2 text-neutral-700 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100" title="Delete sprint">
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  <button onClick={() => { setShowSprintList(false); setShowCreateSprint(true); }} className="w-full text-left px-3 py-2 text-xs text-neutral-500 hover:text-emerald-400 hover:bg-neutral-900 transition-colors flex items-center gap-1">
+                    <Plus size={12} /> NEW SPRINT
+                  </button>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex gap-1 border-l border-neutral-800 pl-4">
+              <button onClick={() => setShowEditSprint(true)} title="Edit current sprint" className="border border-neutral-800 hover:border-neutral-600 rounded p-1.5 text-neutral-500 hover:text-emerald-400 transition-colors">
+                <Pencil size={14} />
+              </button>
+              <button onClick={() => setConfirmDelete({ type: 'sprint', id: activeSprint.id, name: activeSprint.name })} title="Delete current sprint" className="border border-neutral-800 hover:border-red-900 rounded p-1.5 text-neutral-500 hover:text-red-400 transition-colors">
+                <Trash2 size={14} />
+              </button>
+              {activeSprint.status === 'ACTIVE' && (
+                <button onClick={() => setCompleteConfirm(true)} title="Mark sprint complete" className="border border-neutral-800 hover:border-emerald-700 rounded p-1.5 text-neutral-500 hover:text-emerald-400 transition-colors">
+                  <CheckCircle size={14} />
+                </button>
+              )}
+            </div>
+            
+            <button onClick={() => setShowGoalArchitect(v => !v)} className={`border rounded px-2 py-1 text-xs font-mono transition-colors md:ml-2 ${showGoalArchitect ? 'border-emerald-700 text-emerald-400 bg-emerald-950/20' : 'border-neutral-800 text-neutral-500 hover:text-neutral-300'}`}>
+              GOALS
+            </button>
           </div>
-          
-          <button onClick={() => setShowGoalArchitect(v => !v)} className={`border rounded px-2 py-1 text-xs font-mono transition-colors ml-2 ${showGoalArchitect ? 'border-emerald-700 text-emerald-400 bg-emerald-950/20' : 'border-neutral-800 text-neutral-500 hover:text-neutral-300'}`}>
-            GOALS
-          </button>
         </div>
       </div>
 
