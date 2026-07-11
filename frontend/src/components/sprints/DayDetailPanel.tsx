@@ -110,7 +110,7 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
                 const isConfirming = confirmDeleteId === log.id;
 
                 return (
-                  <div key={log.id} className="flex items-start gap-3 border border-neutral-900 rounded p-2 bg-neutral-955 group">
+                  <div key={log.id} className="flex items-start gap-3 border border-neutral-900 rounded p-2 bg-neutral-950 group">
                     <div
                       className="w-1 rounded self-stretch flex-shrink-0"
                       style={{ backgroundColor: isAnon ? '#64748b' : (goal?.color ?? '#444') }}
@@ -136,7 +136,7 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
                           {formatMinutes(log.durationMinutes)}
                         </span>
                       </div>
-                      {log.note && <p className="text-neutral-550 mt-0.5 text-[10px]">{log.note}</p>}
+                      {log.note && <p className="text-neutral-500 mt-0.5 text-[10px]">{log.note}</p>}
                     </div>
 
                     {/* Edit + Delete controls */}
@@ -271,7 +271,7 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
     return (
       <div
         key={t.id}
-        className={`flex items-start gap-2 border rounded p-2 group transition-all border-neutral-900 bg-neutral-955`}
+        className={`flex items-start gap-2 border rounded p-2 group transition-all border-neutral-900 bg-neutral-950`}
       >
         {/* Toggle Checkbox */}
         <button

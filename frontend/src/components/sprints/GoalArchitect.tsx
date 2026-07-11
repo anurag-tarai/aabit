@@ -353,7 +353,7 @@ export const GoalArchitect: React.FC<GoalArchitectProps> = ({ sprintId, activeGo
                         autoFocus
                         value={editGoalName}
                         onChange={e => setEditGoalName(e.target.value)}
-                        className="flex-1 bg-neutral-850 border border-neutral-700 text-neutral-205 p-1 rounded outline-none focus:border-emerald-600 text-xs min-w-0 font-bold"
+                        className="flex-1 bg-neutral-800 border border-neutral-700 text-neutral-200 p-1 rounded outline-none focus:border-emerald-600 text-xs min-w-0 font-bold"
                       />
                       <CustomInput
                         type="color"
@@ -399,7 +399,7 @@ export const GoalArchitect: React.FC<GoalArchitectProps> = ({ sprintId, activeGo
                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: g.color }} />
                     <button
                       onClick={() => setExpandedGoalId(expandedGoalId === g.id ? null : g.id)}
-                      className="flex items-center gap-1 text-left text-neutral-450 hover:text-neutral-205 truncate min-w-0"
+                      className="flex items-center gap-1 text-left text-neutral-400 hover:text-neutral-200 truncate min-w-0"
                     >
                       {expandedGoalId === g.id ? <ChevronDown size={10} /> : <ChevronRight size={10} />}
                       <span className="truncate">{g.name}</span>
@@ -469,7 +469,7 @@ export const GoalArchitect: React.FC<GoalArchitectProps> = ({ sprintId, activeGo
                           autoFocus
                           value={editWorkAreaName}
                           onChange={e => setEditWorkAreaName(e.target.value)}
-                          className="bg-neutral-850 border border-neutral-700 text-neutral-200 p-0.5 rounded outline-none text-[10px] w-24 font-bold"
+                          className="bg-neutral-800 border border-neutral-700 text-neutral-200 p-0.5 rounded outline-none text-[10px] w-24 font-bold"
                         />
                         <button
                           onClick={() => handleSaveEditWorkArea(goal.id, wa.id)}
@@ -490,7 +490,7 @@ export const GoalArchitect: React.FC<GoalArchitectProps> = ({ sprintId, activeGo
 
                   return (
                     <div key={wa.id} className="flex items-center gap-1 group border border-neutral-800 rounded px-2 py-0.5 bg-neutral-950 hover:border-neutral-700 transition-colors">
-                      <span className="text-neutral-550">{wa.name}</span>
+                      <span className="text-neutral-500">{wa.name}</span>
                       <button
                         onClick={() => handleStartEditWorkArea(wa)}
                         title="Edit work area"

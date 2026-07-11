@@ -142,13 +142,13 @@ export const CircularClockPicker: React.FC<CircularClockPickerProps> = ({
           <div className="flex flex-col gap-0.5 ml-4 border-l border-neutral-900 pl-3">
             <button
               onClick={() => setPeriod('AM')}
-              className={`text-[10px] font-bold py-0.5 px-1.5 rounded transition-colors ${period === 'AM' ? 'bg-emerald-950/30 text-emerald-400 border border-emerald-900/50' : 'text-neutral-650'}`}
+              className={`text-[10px] font-bold py-0.5 px-1.5 rounded transition-colors ${period === 'AM' ? 'bg-emerald-950/30 text-emerald-400 border border-emerald-900/50' : 'text-neutral-600'}`}
             >
               AM
             </button>
             <button
               onClick={() => setPeriod('PM')}
-              className={`text-[10px] font-bold py-0.5 px-1.5 rounded transition-colors ${period === 'PM' ? 'bg-emerald-950/30 text-emerald-400 border border-emerald-900/50' : 'text-neutral-650'}`}
+              className={`text-[10px] font-bold py-0.5 px-1.5 rounded transition-colors ${period === 'PM' ? 'bg-emerald-950/30 text-emerald-400 border border-emerald-900/50' : 'text-neutral-600'}`}
             >
               PM
             </button>
