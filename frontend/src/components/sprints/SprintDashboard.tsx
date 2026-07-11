@@ -314,8 +314,8 @@ export const SprintDashboard: React.FC = () => {
     loadTargets();
   };
 
-  const handleTargetDelete = async (t: any) => {
-    await sprintApi.deleteTarget(t.id);
+  const handleTargetDelete = async (id: string) => {
+    await sprintApi.deleteTarget(id);
     loadTargets();
   };
 
@@ -328,11 +328,12 @@ export const SprintDashboard: React.FC = () => {
     date.setDate(date.getDate() + (isDaily ? 1 : 7));
     const newDateStr = date.toISOString().split('T')[0];
 
-    const payload: any = { name: t.name };
+    const payload: any = { ...t };
     if (isDaily) {
       payload.targetDate = newDateStr;
     } else {
       payload.weekStartDate = newDateStr;
+      payload.targetDate = null;
     }
 
     await sprintApi.updateTarget(t.id, payload);
