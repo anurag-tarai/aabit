@@ -241,7 +241,7 @@ export const TimeLoggerModal: React.FC<TimeLoggerModalProps> = ({
             )}
 
             {/* Time range using custom round clock picker */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {(['Start', 'End'] as const).map(label => {
                 const val = label === 'Start' ? startTime : endTime;
                 const setVal = label === 'Start' ? setStartTime : setEndTime;

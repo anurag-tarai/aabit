@@ -201,13 +201,13 @@ export const SprintVisualizer: React.FC = () => {
       )}
 
       {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="bg-neutral-950 border border-neutral-800 rounded-2xl p-5 h-32 animate-pulse" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
           {/* ── Card 1: Total hours ──────────────────────────────────────────── */}
           <Card>
