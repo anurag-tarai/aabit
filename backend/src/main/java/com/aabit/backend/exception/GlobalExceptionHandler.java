@@ -49,6 +49,12 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, message);
     }
 
+    @ExceptionHandler(AppException.class)
+    public ResponseEntity<?> handleAppException(AppException ex) {
+        log.warn("[APP_EXCEPTION] {} - {}", ex.getStatus(), ex.getMessage());
+        return buildResponse(ex.getStatus(), ex.getMessage());
+    }
+
     // Catch-all fallback (VERY IMPORTANT)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleGeneric(Exception ex) {

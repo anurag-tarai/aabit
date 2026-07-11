@@ -6,6 +6,7 @@ import { AuthPage } from './components/auth/AuthPage';
 import { SprintDashboard } from './components/sprints/SprintDashboard';
 import { SprintVisualizer } from './components/sprints/SprintVisualizer';
 import { Settings } from './components/common/Setting';
+import { GlobalErrorToast } from './components/common/GlobalErrorToast';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const sessionToken = localStorage.getItem('aabit_session_token');
@@ -16,6 +17,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 function App() {
   return (
     <BrowserRouter>
+      <GlobalErrorToast />
       <Routes>
         <Route path="/auth" element={<AuthPage />} />
 
@@ -35,5 +37,5 @@ function App() {
     </BrowserRouter>
   );
 }
-
+  
 export default App;

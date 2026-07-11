@@ -41,6 +41,7 @@ public class SecurityConfig {
                         ).permitAll() // Open access path routing
                         .anyRequest().authenticated() // Block all other endpoint interaction modules
                 )
+                .exceptionHandling(e -> e.authenticationEntryPoint(new com.aabit.backend.auth.context.JwtAuthenticationEntryPoint()))
                 // Inject our custom JWT filter right before the baseline username authentication layer
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

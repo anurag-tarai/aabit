@@ -56,6 +56,19 @@ api.interceptors.response.use(
       if (window.location.pathname !== '/auth') {
         window.location.href = '/auth';
       }
+    } else if (error.response && error.response.data && error.response.data.message) {
+      // Dispatch a custom event to our GlobalErrorToast
+      window.dispatchEvent(
+        new CustomEvent('api-error', { 
+          detail: { message: error.response.data.message } 
+        })
+      );
+    } else {
+      window.dispatchEvent(
+        new CustomEvent('api-error', { 
+          detail: { message: 'An unexpected network error occurred.' } 
+        })
+      );
     }
     return Promise.reject(error);
   }
