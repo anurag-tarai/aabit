@@ -1,0 +1,1 @@
+ALTER TABLE sprint ADD COLUMN mission TEXT;

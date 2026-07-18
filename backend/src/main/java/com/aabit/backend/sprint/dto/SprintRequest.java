@@ -13,7 +13,9 @@ public record SprintRequest(
         LocalDate startDate,
 
         @NotNull(message = "End date is required")
-        LocalDate endDate
+        LocalDate endDate,
+
+        String mission
 ) {
     public SprintRequest {
         if (startDate != null && endDate != null && startDate.isAfter(endDate)) {

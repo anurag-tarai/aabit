@@ -10,9 +10,10 @@ public record SprintResponse(
         String name,
         LocalDate startDate,
         LocalDate endDate,
-        String status
+        String status,
+        String mission
 ) {
     public static SprintResponse from(Sprint s) {
-        return new SprintResponse(s.getId(), s.getName(), s.getStartDate(), s.getEndDate(), s.getStatus());
+        return new SprintResponse(s.getId(), s.getName(), s.getStartDate(), s.getEndDate(), s.getStatus(), s.getMission());
     }
 }

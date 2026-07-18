@@ -7,6 +7,7 @@ export interface Sprint {
   startDate: string;
   endDate: string;
   status: 'ACTIVE' | 'COMPLETED';
+  mission?: string;
 }
 
 export interface WorkArea {
@@ -127,13 +128,13 @@ export function getWeekSunday(mondayStr: string): string {
 // ─── API Client Definition ───────────────────────────────────────────────────
 export const sprintApi = {
   // Sprints
-  createSprint: (payload: { name: string; startDate: string; endDate: string }) =>
+  createSprint: (payload: { name: string; startDate: string; endDate: string; mission?: string }) =>
     api.post<Sprint>('/sprints', payload),
   getAllSprints: () =>
     api.get<Sprint[]>('/sprints'),
   getCurrentSprint: () =>
     api.get<Sprint>('/sprints/current'),
-  updateSprint: (sprintId: string, payload: { name: string; startDate: string; endDate: string }) =>
+  updateSprint: (sprintId: string, payload: { name: string; startDate: string; endDate: string; mission?: string }) =>
     api.patch<Sprint>(`/sprints/${sprintId}`, payload),
   deleteSprint: (sprintId: string) =>
     api.delete(`/sprints/${sprintId}`),
