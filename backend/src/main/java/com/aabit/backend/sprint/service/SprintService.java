@@ -36,7 +36,7 @@ public class SprintService {
             throw new IllegalArgumentException("A sprint already exists for this time period. Sprints cannot overlap.");
         }
 
-        Sprint sprint = new Sprint(null, userId, req.name(), req.startDate(), req.endDate(), "ACTIVE");
+        Sprint sprint = new Sprint(null, userId, req.name(), req.startDate(), req.endDate(), "ACTIVE", req.mission());
         return SprintResponse.from(sprintRepository.save(sprint));
     }
 
@@ -70,6 +70,7 @@ public class SprintService {
         sprint.setName(req.name());
         sprint.setStartDate(req.startDate());
         sprint.setEndDate(req.endDate());
+        sprint.setMission(req.mission());
         return SprintResponse.from(sprintRepository.save(sprint));
     }
 

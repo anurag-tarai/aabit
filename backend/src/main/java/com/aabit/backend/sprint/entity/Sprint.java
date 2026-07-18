@@ -33,4 +33,7 @@ public class Sprint {
     // ACTIVE | COMPLETED
     @Column(nullable = false)
     private String status = "ACTIVE";
+
+    @Column(name = "mission", columnDefinition = "TEXT")
+    private String mission;
 }

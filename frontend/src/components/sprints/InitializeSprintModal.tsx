@@ -14,6 +14,7 @@ export const InitializeSprintModal: React.FC<InitializeSprintModalProps> = ({ on
   const [name, setName] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [mission, setMission] = useState('');
   const [loading, setLoading] = useState(false);
   
 
@@ -21,7 +22,7 @@ export const InitializeSprintModal: React.FC<InitializeSprintModalProps> = ({ on
     e.preventDefault();
     setLoading(true);
     try {
-      await sprintApi.createSprint({ name, startDate, endDate });
+      await sprintApi.createSprint({ name, startDate, endDate, mission: mission || undefined });
       onSuccess();
     } catch (err: any) {
       showErrorToast(err.response?.data?.message ?? 'Failed to create sprint. Period may overlap an existing one.');
@@ -54,6 +55,16 @@ export const InitializeSprintModal: React.FC<InitializeSprintModalProps> = ({ on
               value={name}
               onChange={e => setName(e.target.value)}
               className="bg-neutral-900 border border-neutral-800 text-neutral-300 p-2 rounded outline-none focus:border-emerald-600"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] text-neutral-600 uppercase font-bold">Mission (Optional)</label>
+            <textarea
+              placeholder="e.g., Become a man whose presence makes people feel comfortable..."
+              value={mission}
+              onChange={e => setMission(e.target.value)}
+              className="bg-neutral-900 border border-neutral-800 text-neutral-300 p-2 rounded outline-none focus:border-emerald-600 min-h-[60px] resize-y"
             />
           </div>
 

@@ -12,7 +12,7 @@ import { TargetModal } from './TargetModal';
 import { getMondayFromDate } from '../../api/sprintClient';
 import {
   Activity, AlertTriangle, ChevronLeft, ChevronRight,
-  List, Plus, Pencil, Trash2, CheckCircle, X, Menu
+  List, Plus, Pencil, Trash2, CheckCircle, X, Menu, Target
 } from 'lucide-react';
 
 // ─── Live Clock ───────────────────────────────────────────────────────────────
@@ -89,6 +89,7 @@ const EditSprintModal: React.FC<EditSprintModalProps> = ({ sprint, onClose, onSa
   const [name, setName] = useState(sprint.name);
   const [startDate, setStartDate] = useState(sprint.startDate);
   const [endDate, setEndDate] = useState(sprint.endDate);
+  const [mission, setMission] = useState(sprint.mission || '');
   const [loading, setLoading] = useState(false);
   
 
@@ -96,7 +97,7 @@ const EditSprintModal: React.FC<EditSprintModalProps> = ({ sprint, onClose, onSa
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await sprintApi.updateSprint(sprint.id, { name, startDate, endDate });
+      const res = await sprintApi.updateSprint(sprint.id, { name, startDate, endDate, mission: mission || undefined });
       onSaved(res.data);
     } catch (err: any) {
       showErrorToast(err.response?.data?.message ?? 'Failed to update sprint.');
@@ -122,6 +123,15 @@ const EditSprintModal: React.FC<EditSprintModalProps> = ({ sprint, onClose, onSa
               value={name}
               onChange={e => setName(e.target.value)}
               className="bg-neutral-900 border border-neutral-800 text-neutral-300 p-2 rounded outline-none focus:border-emerald-600"
+            />
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-neutral-500 uppercase">
+            Mission (Optional)
+            <textarea
+              value={mission}
+              onChange={e => setMission(e.target.value)}
+              placeholder="e.g., Become a man whose presence makes people feel comfortable..."
+              className="bg-neutral-900 border border-neutral-800 text-neutral-300 p-2 rounded outline-none focus:border-emerald-600 min-h-[60px] resize-y normal-case"
             />
           </label>
           <label className="flex flex-col gap-1 text-xs text-neutral-500 uppercase">
@@ -490,6 +500,18 @@ export const SprintDashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* ── Mission ── */}
+      {activeSprint.mission && (
+        <div className="bg-[#121212] border border-neutral-800 rounded-lg p-5 animate-in fade-in slide-in-from-top-2">
+          <div className="text-[10px] font-mono text-emerald-500 font-bold uppercase tracking-widest mb-2 flex items-center gap-2">
+            <Target size={14} /> MISSION
+          </div>
+          <div className="text-sm text-neutral-300 font-serif leading-relaxed italic whitespace-pre-wrap">
+            "{activeSprint.mission}"
+          </div>
+        </div>
+      )}
 
       {/* ── Goal Architect (collapsible) ── */}
       {showGoalArchitect && (
