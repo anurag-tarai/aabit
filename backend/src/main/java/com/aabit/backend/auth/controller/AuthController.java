@@ -13,15 +13,9 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @PostMapping("/request")
-    public ResponseEntity<Void> requestOtp(@RequestBody OtpRequest request) {
-        authService.requestOtp(request);
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/verify")
-    public ResponseEntity<AuthResponse> verifyLogin(@RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.verifyLogin(request));
+    @PostMapping("/login")
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+        return ResponseEntity.ok(authService.login(request));
     }
 
     @PostMapping("/logout")

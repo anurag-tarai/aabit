@@ -23,4 +23,7 @@ public class User {
 
     @Column(name = "vault_phrase_wrapped", columnDefinition = "TEXT")
     private String vaultPhraseWrapped;
+
+    @Column(name = "password_hash")
+    private String passwordHash;
 }
